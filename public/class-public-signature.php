@@ -34,18 +34,30 @@ class WP_SignFlow_Public_Signature {
         }
 
         if (empty($_GET['token'])) {
-            wp_die('Invalid signature link');
+            $this->render_error_page('invalid_title', 'invalid_message');
+            exit;
         }
 
         $token = sanitize_text_field($_GET['token']);
         $contract = WP_SignFlow_Contract_Generator::get_contract_by_token($token);
 
         if (!$contract) {
-            wp_die('Contract not found or link expired');
+            $this->render_error_page('invalid_title', 'invalid_message');
+            exit;
         }
 
         if ($contract->status === 'signed') {
-            wp_die('This contract has already been signed');
+            $this->render_error_page('already_signed_title', 'already_signed_message');
+            exit;
+        }
+
+        // Check if contract has expired
+        if (!empty($contract->expires_at)) {
+            $expires_timestamp = strtotime($contract->expires_at);
+            if ($expires_timestamp && $expires_timestamp < time()) {
+                $this->render_error_page('expired_title', 'expired_message');
+                exit;
+            }
         }
 
         // Log page view
@@ -61,6 +73,21 @@ class WP_SignFlow_Public_Signature {
      * Render signature page
      */
     private function render_signature_page($contract, $token) {
+        // Get language - check URL parameter first, then template language
+        $language = 'en';
+        $available_languages = array('en', 'fr', 'es', 'de', 'it', 'pt', 'nl');
+
+        if (!empty($_GET['lang']) && in_array($_GET['lang'], $available_languages)) {
+            $language = sanitize_text_field($_GET['lang']);
+        } elseif (!empty($contract->template_id)) {
+            $template = WP_SignFlow_Template_Manager::get_template($contract->template_id);
+            if ($template && !empty($template->language)) {
+                $language = $template->language;
+            }
+        }
+
+        // Get translations
+        $translations = WP_SignFlow_Translations::get_signature_page_translations($language);
         ?>
         <!DOCTYPE html>
         <html <?php language_attributes(); ?>>
@@ -68,7 +95,7 @@ class WP_SignFlow_Public_Signature {
             <meta charset="<?php bloginfo('charset'); ?>">
             <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
             <meta name="robots" content="noindex, nofollow">
-            <title>Sign Contract - <?php bloginfo('name'); ?></title>
+            <title><?php echo esc_html($translations['page_title']); ?> - <?php bloginfo('name'); ?></title>
             <?php wp_head(); ?>
             <style>
                 * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -90,10 +117,33 @@ class WP_SignFlow_Public_Signature {
                     background: #2271b1;
                     color: white;
                     padding: 20px 30px;
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
                 }
-                .signflow-header h1 {
+                .signflow-header-content h1 {
                     font-size: 24px;
                     margin-bottom: 5px;
+                }
+                .language-selector {
+                    margin-left: 20px;
+                }
+                .language-selector select {
+                    padding: 8px 12px;
+                    border: 1px solid rgba(255,255,255,0.3);
+                    border-radius: 4px;
+                    background: rgba(255,255,255,0.2);
+                    color: white;
+                    font-size: 14px;
+                    cursor: pointer;
+                    transition: all 0.3s;
+                }
+                .language-selector select:hover {
+                    background: rgba(255,255,255,0.3);
+                }
+                .language-selector select option {
+                    background: #2271b1;
+                    color: white;
                 }
                 .signflow-content {
                     padding: 30px;
@@ -210,24 +260,53 @@ class WP_SignFlow_Public_Signature {
                 @media (max-width: 768px) {
                     body { padding: 10px; }
                     .signflow-content { padding: 20px; }
-                    .signflow-header h1 { font-size: 20px; }
+                    .signflow-header {
+                        flex-direction: column;
+                        align-items: flex-start;
+                    }
+                    .signflow-header-content h1 { font-size: 20px; }
+                    .language-selector {
+                        margin-left: 0;
+                        margin-top: 10px;
+                    }
                 }
             </style>
         </head>
         <body>
             <div class="signflow-container">
                 <div class="signflow-header">
-                    <h1><?php bloginfo('name'); ?></h1>
-                    <p>Contract Signature Request</p>
+                    <div class="signflow-header-content">
+                        <h1><?php bloginfo('name'); ?></h1>
+                        <p><?php echo esc_html($translations['page_title']); ?></p>
+                    </div>
+                    <div class="language-selector">
+                        <select id="language-selector" onchange="changeLanguage(this.value)">
+                            <?php
+                            $language_names = array(
+                                'en' => 'English',
+                                'fr' => 'Français',
+                                'es' => 'Español',
+                                'de' => 'Deutsch',
+                                'it' => 'Italiano',
+                                'pt' => 'Português',
+                                'nl' => 'Nederlands'
+                            );
+                            foreach ($language_names as $code => $name) {
+                                $selected = ($code === $language) ? 'selected' : '';
+                                echo '<option value="' . esc_attr($code) . '" ' . $selected . '>' . esc_html($name) . '</option>';
+                            }
+                            ?>
+                        </select>
+                    </div>
                 </div>
 
                 <div class="signflow-content">
                     <div class="alert alert-success" id="success-message">
-                        <strong>Success!</strong> Contract signed successfully.
+                        <strong><?php echo esc_html($translations['success_title']); ?></strong> <?php echo esc_html($translations['success_message']); ?>
                     </div>
                     <div class="alert alert-error" id="error-message"></div>
 
-                    <h2>Contract Document</h2>
+                    <h2><?php echo esc_html($translations['contract_preview']); ?></h2>
                     <div class="contract-preview">
                         <?php
                         if ($contract->pdf_path) {
@@ -250,37 +329,35 @@ class WP_SignFlow_Public_Signature {
                     </div>
 
                     <div class="signature-section">
-                        <h2>Sign Contract</h2>
+                        <h2><?php echo esc_html($translations['signature_section']); ?></h2>
                         <form id="signature-form">
                             <div class="form-group">
-                                <label for="signer-name">Full Name *</label>
-                                <input type="text" id="signer-name" name="signer_name" required>
+                                <label for="signer-name"><?php echo esc_html($translations['signer_name_label']); ?> *</label>
+                                <input type="text" id="signer-name" name="signer_name" placeholder="<?php echo esc_attr($translations['signer_name_placeholder']); ?>" required>
                             </div>
 
                             <div class="form-group">
-                                <label for="signer-email">Email Address *</label>
-                                <input type="email" id="signer-email" name="signer_email" required>
+                                <label for="signer-email"><?php echo esc_html($translations['signer_email_label']); ?> *</label>
+                                <input type="email" id="signer-email" name="signer_email" placeholder="<?php echo esc_attr($translations['signer_email_placeholder']); ?>" required>
                             </div>
 
                             <div class="form-group">
-                                <label>Signature *</label>
+                                <label><?php echo esc_html($translations['signature_section']); ?> *</label>
                                 <p style="color: #666; font-size: 14px; margin-bottom: 10px;">
-                                    Please sign in the box below using your mouse or finger
+                                    <?php echo esc_html($translations['draw_signature_label']); ?>
                                 </p>
                                 <div class="signature-pad-container">
                                     <canvas id="signature-pad" class="signature-pad"></canvas>
                                 </div>
                                 <div class="signature-actions">
-                                    <button type="button" class="btn btn-clear" id="clear-signature">Clear Signature</button>
+                                    <button type="button" class="btn btn-clear" id="clear-signature"><?php echo esc_html($translations['clear_button']); ?></button>
                                 </div>
                             </div>
 
                             <div class="consent-checkbox">
                                 <input type="checkbox" id="consent" name="consent" value="yes" required>
                                 <label for="consent">
-                                    I have read and understood the contract above. I consent to sign this contract electronically
-                                    and understand that my electronic signature is legally binding and has the same effect as a
-                                    handwritten signature.
+                                    <?php echo esc_html($translations['consent_label']); ?>
                                 </label>
                             </div>
 
@@ -290,13 +367,81 @@ class WP_SignFlow_Public_Signature {
                             <input type="hidden" name="signature_data" id="signature-data">
 
                             <button type="submit" class="btn btn-primary" id="submit-btn">
-                                Sign Contract
+                                <?php echo esc_html($translations['submit_button']); ?>
                             </button>
                         </form>
                     </div>
                 </div>
             </div>
+            <script>
+                function changeLanguage(lang) {
+                    var url = new URL(window.location.href);
+                    url.searchParams.set('lang', lang);
+                    window.location.href = url.toString();
+                }
+            </script>
             <?php wp_footer(); ?>
+        </body>
+        </html>
+        <?php
+    }
+
+    /**
+     * Render error page
+     */
+    private function render_error_page($title_key, $message_key, $language = 'en') {
+        $translations = WP_SignFlow_Translations::get_signature_page_translations($language);
+        ?>
+        <!DOCTYPE html>
+        <html <?php language_attributes(); ?>>
+        <head>
+            <meta charset="<?php bloginfo('charset'); ?>">
+            <meta name="viewport" content="width=device-width, initial-scale=1">
+            <meta name="robots" content="noindex, nofollow">
+            <title><?php echo esc_html($translations[$title_key]); ?> - <?php bloginfo('name'); ?></title>
+            <style>
+                * { margin: 0; padding: 0; box-sizing: border-box; }
+                body {
+                    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+                    line-height: 1.6;
+                    background: #f5f5f5;
+                    padding: 20px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    min-height: 100vh;
+                }
+                .error-container {
+                    max-width: 500px;
+                    background: white;
+                    border-radius: 8px;
+                    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+                    padding: 40px;
+                    text-align: center;
+                }
+                .error-icon {
+                    font-size: 64px;
+                    color: #dc3232;
+                    margin-bottom: 20px;
+                }
+                h1 {
+                    color: #333;
+                    margin-bottom: 15px;
+                    font-size: 24px;
+                }
+                p {
+                    color: #666;
+                    font-size: 16px;
+                    margin-bottom: 20px;
+                }
+            </style>
+        </head>
+        <body>
+            <div class="error-container">
+                <div class="error-icon">⚠</div>
+                <h1><?php echo esc_html($translations[$title_key]); ?></h1>
+                <p><?php echo esc_html($translations[$message_key]); ?></p>
+            </div>
         </body>
         </html>
         <?php
@@ -309,6 +454,25 @@ class WP_SignFlow_Public_Signature {
         if (!isset($_GET['signflow_action']) || $_GET['signflow_action'] !== 'sign') {
             return;
         }
+
+        // Get language - check URL parameter first, then template language
+        $language = 'en';
+        $available_languages = array('en', 'fr', 'es', 'de', 'it', 'pt', 'nl');
+
+        if (!empty($_GET['lang']) && in_array($_GET['lang'], $available_languages)) {
+            $language = sanitize_text_field($_GET['lang']);
+        } elseif (!empty($_GET['token'])) {
+            $token = sanitize_text_field($_GET['token']);
+            $contract = WP_SignFlow_Contract_Generator::get_contract_by_token($token);
+            if ($contract && !empty($contract->template_id)) {
+                $template = WP_SignFlow_Template_Manager::get_template($contract->template_id);
+                if ($template && !empty($template->language)) {
+                    $language = $template->language;
+                }
+            }
+        }
+
+        $translations = WP_SignFlow_Translations::get_signature_page_translations($language);
 
         wp_enqueue_script(
             'signature-pad',
@@ -327,7 +491,14 @@ class WP_SignFlow_Public_Signature {
         );
 
         wp_localize_script('signflow-signature', 'signflowData', array(
-            'ajax_url' => admin_url('admin-ajax.php')
+            'ajax_url' => admin_url('admin-ajax.php'),
+            'i18n' => array(
+                'error_name_required' => $translations['error_name_required'],
+                'error_email_required' => $translations['error_email_required'],
+                'error_signature_required' => $translations['error_signature_required'],
+                'error_consent_required' => $translations['error_consent_required'],
+                'error_general' => $translations['error_general']
+            )
         ));
     }
 

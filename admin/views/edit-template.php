@@ -8,11 +8,11 @@ if (!defined('ABSPATH')) {
 }
 
 $is_new = !$template;
-$page_title = $is_new ? 'Add New Template' : 'Edit Template';
+$page_title = $is_new ? __('Add New Template', 'wp-signflow') : __('Edit Template', 'wp-signflow');
 ?>
 
 <div class="wrap">
-    <h1><?php echo $page_title; ?></h1>
+    <h1><?php echo esc_html($page_title); ?></h1>
 
     <form method="post" action="<?php echo admin_url('admin-post.php'); ?>">
         <input type="hidden" name="action" value="signflow_save_template">
@@ -24,17 +24,43 @@ $page_title = $is_new ? 'Add New Template' : 'Edit Template';
         <table class="form-table">
             <tr>
                 <th scope="row">
-                    <label for="template_name">Template Name</label>
+                    <label for="template_name"><?php _e('Template Name', 'wp-signflow'); ?></label>
                 </th>
                 <td>
                     <input type="text" name="template_name" id="template_name" class="regular-text"
                            value="<?php echo $is_new ? '' : esc_attr($template->name); ?>" required>
-                    <p class="description">Give your template a descriptive name</p>
+                    <p class="description"><?php _e('Give your template a descriptive name', 'wp-signflow'); ?></p>
                 </td>
             </tr>
             <tr>
                 <th scope="row">
-                    <label for="template_content">Template Content</label>
+                    <label for="template_language"><?php _e('Language', 'wp-signflow'); ?></label>
+                </th>
+                <td>
+                    <select name="template_language" id="template_language" class="regular-text">
+                        <?php
+                        $languages = array(
+                            'en' => 'English',
+                            'fr' => 'Français',
+                            'es' => 'Español',
+                            'de' => 'Deutsch',
+                            'it' => 'Italiano',
+                            'pt' => 'Português',
+                            'nl' => 'Nederlands'
+                        );
+                        $current_lang = $is_new ? 'en' : ($template->language ?? 'en');
+                        foreach ($languages as $code => $name) {
+                            $selected = ($code === $current_lang) ? 'selected' : '';
+                            echo '<option value="' . esc_attr($code) . '" ' . $selected . '>' . esc_html($name) . '</option>';
+                        }
+                        ?>
+                    </select>
+                    <p class="description"><?php _e('Select the language for the signature page.', 'wp-signflow'); ?></p>
+                </td>
+            </tr>
+            <tr>
+                <th scope="row">
+                    <label for="template_content"><?php _e('Template Content', 'wp-signflow'); ?></label>
                 </th>
                 <td>
                     <?php
@@ -47,16 +73,15 @@ $page_title = $is_new ? 'Add New Template' : 'Edit Template';
                     ));
                     ?>
                     <p class="description">
-                        Use <code>{{variable_name}}</code> for dynamic content.
-                        Example: <code>{{client_name}}</code>, <code>{{contract_date}}</code>, <code>{{amount}}</code>
+                        <?php printf(__('Use %s for dynamic content. Example: %s, %s, %s', 'wp-signflow'), '<code>{{variable_name}}</code>', '<code>{{client_name}}</code>', '<code>{{contract_date}}</code>', '<code>{{amount}}</code>'); ?>
                     </p>
                 </td>
             </tr>
         </table>
 
         <?php if (!$is_new && !empty($template->variables)): ?>
-            <h2>Detected Variables</h2>
-            <p>The following variables were found in your template:</p>
+            <h2><?php _e('Detected Variables', 'wp-signflow'); ?></h2>
+            <p><?php _e('The following variables were found in your template:', 'wp-signflow'); ?></p>
             <ul>
                 <?php foreach ($template->variables as $var): ?>
                     <li><code>{{<?php echo esc_html($var); ?>}}</code></li>
@@ -65,8 +90,8 @@ $page_title = $is_new ? 'Add New Template' : 'Edit Template';
         <?php endif; ?>
 
         <p class="submit">
-            <input type="submit" name="submit" id="submit" class="button button-primary" value="<?php echo $is_new ? 'Create Template' : 'Update Template'; ?>">
-            <a href="<?php echo admin_url('admin.php?page=wp-signflow'); ?>" class="button">Cancel</a>
+            <input type="submit" name="submit" id="submit" class="button button-primary" value="<?php echo esc_attr($is_new ? __('Create Template', 'wp-signflow') : __('Update Template', 'wp-signflow')); ?>">
+            <a href="<?php echo admin_url('admin.php?page=wp-signflow'); ?>" class="button"><?php _e('Cancel', 'wp-signflow'); ?></a>
         </p>
     </form>
 </div>

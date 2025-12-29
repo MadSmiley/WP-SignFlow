@@ -59,6 +59,9 @@
         const successMessage = $('#success-message');
         const errorMessage = $('#error-message');
 
+        // Store original button text
+        submitBtn.data('original-text', submitBtn.text());
+
         form.on('submit', function(e) {
             e.preventDefault();
 
@@ -68,13 +71,13 @@
 
             // Validate signature
             if (signaturePad.isEmpty()) {
-                showError('Please provide your signature');
+                showError(signflowData.i18n.error_signature_required);
                 return;
             }
 
             // Validate consent
             if (!$('#consent').is(':checked')) {
-                showError('You must consent to sign the contract');
+                showError(signflowData.i18n.error_consent_required);
                 return;
             }
 
@@ -105,13 +108,15 @@
                             window.location.href = '/';
                         }, 3000);
                     } else {
-                        showError(response.data.message || 'An error occurred');
-                        submitBtn.prop('disabled', false).text('Sign Contract');
+                        showError(response.data.message || signflowData.i18n.error_general);
+                        submitBtn.prop('disabled', false);
+                        submitBtn.text(submitBtn.data('original-text'));
                     }
                 },
                 error: function(xhr) {
-                    showError('Network error. Please try again.');
-                    submitBtn.prop('disabled', false).text('Sign Contract');
+                    showError(signflowData.i18n.error_general);
+                    submitBtn.prop('disabled', false);
+                    submitBtn.text(submitBtn.data('original-text'));
                 }
             });
         });

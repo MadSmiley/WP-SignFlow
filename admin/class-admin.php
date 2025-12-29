@@ -31,60 +31,60 @@ class WP_SignFlow_Admin {
      */
     public function add_admin_menu() {
         add_menu_page(
-            'WP SignFlow',
-            'SignFlow',
+            __('WP SignFlow', 'wp-signflow'),
+            __('SignFlow', 'wp-signflow'),
             'manage_options',
             'wp-signflow',
             array($this, 'render_templates_page'),
             'dashicons-edit-page',
             30
         );
-        
+
         add_submenu_page(
             'wp-signflow',
-            'Templates',
-            'Templates',
+            __('Templates', 'wp-signflow'),
+            __('Templates', 'wp-signflow'),
             'manage_options',
             'wp-signflow',
             array($this, 'render_templates_page')
         );
-        
+
         add_submenu_page(
             'wp-signflow',
-            'Contracts',
-            'Contracts',
+            __('Contracts', 'wp-signflow'),
+            __('Contracts', 'wp-signflow'),
             'manage_options',
             'wp-signflow-contracts',
             array($this, 'render_contracts_page')
         );
-        
+
         add_submenu_page(
             'wp-signflow',
-            'Settings',
-            'Settings',
+            __('Settings', 'wp-signflow'),
+            __('Settings', 'wp-signflow'),
             'manage_options',
             'wp-signflow-settings',
             array($this, 'render_settings_page')
         );
-        
+
         add_submenu_page(
             'wp-signflow-settings', // Hidden from menu
-            'Edit Template',
-            'Edit Template',
+            __('Edit Template', 'wp-signflow'),
+            __('Edit Template', 'wp-signflow'),
             'manage_options',
             'wp-signflow-edit-template',
             array($this, 'render_edit_template_page')
         );
-        
+
         add_submenu_page(
             'wp-signflow-settings', // Hidden from menu
-            'View Contract',
-            'View Contract',
+            __('View Contract', 'wp-signflow'),
+            __('View Contract', 'wp-signflow'),
             'manage_options',
             'wp-signflow-view-contract',
             array($this, 'render_view_contract_page')
         );
-        
+
     }
 
     /**
@@ -215,6 +215,7 @@ class WP_SignFlow_Admin {
         $template_id = isset($_POST['template_id']) ? intval($_POST['template_id']) : 0;
         $name = sanitize_text_field($_POST['template_name']);
         $content = wp_kses_post($_POST['template_content']);
+        $language = isset($_POST['template_language']) ? sanitize_text_field($_POST['template_language']) : 'en';
 
         // Extract variables from content
         $variables = WP_SignFlow_Template_Manager::extract_variables($content);
@@ -224,11 +225,12 @@ class WP_SignFlow_Admin {
             WP_SignFlow_Template_Manager::update_template($template_id, array(
                 'name' => $name,
                 'content' => $content,
-                'variables' => $variables
+                'variables' => $variables,
+                'language' => $language
             ));
         } else {
             // Create new template
-            WP_SignFlow_Template_Manager::create_template($name, $content, $variables);
+            WP_SignFlow_Template_Manager::create_template($name, $content, $variables, $language);
         }
 
         wp_redirect(admin_url('admin.php?page=wp-signflow&message=saved'));

@@ -33,6 +33,7 @@ class WP_SignFlow_Database {
             slug varchar(255) NOT NULL,
             content longtext NOT NULL,
             variables text,
+            language varchar(10) DEFAULT 'en',
             created_at datetime DEFAULT CURRENT_TIMESTAMP,
             updated_at datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
             created_by bigint(20),

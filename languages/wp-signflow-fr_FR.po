@@ -1,0 +1,434 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: WP SignFlow\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2025-12-29 19:28+0000\n"
+"PO-Revision-Date: 2025-12-29 19:35+0000\n"
+"Last-Translator: \n"
+"Language-Team: Français\n"
+"Language: fr_FR\n"
+"Plural-Forms: nplurals=2; plural=n > 1;\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: Loco https://localise.biz/\n"
+"X-Loco-Version: 2.8.0; wp-6.9; php-8.1.0\n"
+"X-Domain: wp-signflow"
+
+#: admin/views/contracts.php:22 admin/views/templates.php:37
+msgid "Actions"
+msgstr ""
+
+#: admin/views/templates.php:14
+msgid "Add New"
+msgstr "Ajouter"
+
+#: admin/views/edit-template.php:11
+msgid "Add New Template"
+msgstr ""
+
+#: admin/views/settings.php:145
+msgid "API Documentation"
+msgstr ""
+
+#: admin/views/settings.php:121
+msgid "API Key"
+msgstr ""
+
+#: admin/views/settings.php:118
+msgid "API Settings"
+msgstr ""
+
+#: admin/views/contracts.php:49
+msgid "Are you sure you want to delete this unsigned contract?"
+msgstr ""
+
+#: admin/views/templates.php:79
+msgid "Are you sure?"
+msgstr ""
+
+#: admin/views/view-contract.php:105
+msgid "Audit Trail"
+msgstr ""
+
+#: admin/views/view-contract.php:134
+msgid "Back to Contracts"
+msgstr ""
+
+#: admin/views/settings.php:84
+msgid "Bucket Name"
+msgstr ""
+
+#: admin/views/edit-template.php:94
+msgid "Cancel"
+msgstr ""
+
+#: admin/views/settings.php:62
+msgid "Choose where to store signed contracts"
+msgstr ""
+
+#. Description of the plugin
+msgid ""
+"Complete contract management system with templates, dynamic generation, "
+"tablet signature, and secure storage"
+msgstr ""
+
+#: admin/views/settings.php:25
+#, php-format
+msgid "Connection failed: %s"
+msgstr ""
+
+#: admin/views/view-contract.php:16
+msgid "Contract #%d"
+msgstr ""
+
+#: admin/views/view-contract.php:19
+msgid "Contract Information"
+msgstr ""
+
+#: admin/views/templates.php:13
+msgid "Contract Templates"
+msgstr "Template de Document"
+
+#: admin/views/contracts.php:12
+msgid "Contracts"
+msgstr "Documents"
+
+#: admin/views/edit-template.php:93
+msgid "Create Template"
+msgstr "Créé un Template"
+
+#: admin/views/contracts.php:20 admin/views/templates.php:36
+msgid "Created"
+msgstr "Créé"
+
+#: admin/views/view-contract.php:32
+msgid "Created:"
+msgstr "Créé:"
+
+#: admin/views/settings.php:74
+#, php-format
+msgid ""
+"Custom storage directory path (absolute path). Leave empty to use default: %s"
+msgstr ""
+
+#: admin/views/view-contract.php:110
+msgid "Date/Time"
+msgstr ""
+
+#: admin/views/contracts.php:50 admin/views/templates.php:79
+msgid "Delete"
+msgstr "Supprimer"
+
+#: admin/views/settings.php:152
+msgid "Description"
+msgstr "Description"
+
+#: admin/views/view-contract.php:112
+msgid "Details"
+msgstr "Détails"
+
+#: admin/views/edit-template.php:83
+msgid "Detected Variables"
+msgstr ""
+
+#: admin/views/view-contract.php:47
+msgid "Documents:"
+msgstr ""
+
+#: admin/views/view-contract.php:61
+msgid "Download Certificate"
+msgstr ""
+
+#: admin/views/view-contract.php:54
+msgid "Download Contract PDF"
+msgstr ""
+
+#: admin/views/templates.php:78
+msgid "Edit"
+msgstr ""
+
+#: admin/views/edit-template.php:11
+msgid "Edit Template"
+msgstr ""
+
+#: admin/views/settings.php:150
+msgid "Endpoint"
+msgstr ""
+
+#: admin/views/view-contract.php:109
+msgid "Event"
+msgstr ""
+
+#: admin/views/settings.php:159
+msgid "Generate a new contract"
+msgstr ""
+
+#: admin/views/settings.php:135
+msgid "Generate API Key"
+msgstr ""
+
+#. Author of the plugin
+msgid "Germain Belacel"
+msgstr ""
+
+#: admin/views/settings.php:179
+msgid "Get contract audit trail"
+msgstr ""
+
+#: admin/views/settings.php:164
+msgid "Get contract details"
+msgstr ""
+
+#: admin/views/settings.php:169
+msgid "Get contract status"
+msgstr ""
+
+#: admin/views/edit-template.php:32
+msgid "Give your template a descriptive name"
+msgstr ""
+
+#: admin/views/settings.php:60
+msgid "Google Cloud Storage"
+msgstr ""
+
+#: admin/views/settings.php:80
+msgid "Google Cloud Storage Configuration"
+msgstr ""
+
+#: admin/views/settings.php:23
+msgid "Google Cloud Storage connection successful!"
+msgstr ""
+
+#. URI of the plugin
+msgid "https://github.com/MadSmiley/WP-SignFlow"
+msgstr ""
+
+#. Author URI of the plugin
+msgid "https://www.linkedin.com/in/germain-belacel/"
+msgstr ""
+
+#: admin/views/contracts.php:17
+msgid "ID"
+msgstr ""
+
+#: admin/views/view-contract.php:111
+msgid "IP Address"
+msgstr ""
+
+#: admin/views/view-contract.php:96
+msgid "IP Address:"
+msgstr ""
+
+#: admin/views/edit-template.php:37 admin/views/templates.php:33
+msgid "Language"
+msgstr ""
+
+#: admin/views/settings.php:54
+msgid "Local Storage"
+msgstr ""
+
+#: admin/views/settings.php:67
+msgid "Local Storage Path"
+msgstr ""
+
+#: admin/views/settings.php:151
+msgid "Method"
+msgstr ""
+
+#: admin/views/templates.php:32
+msgid "Name"
+msgstr ""
+
+#: admin/views/settings.php:15
+msgid "New API key generated!"
+msgstr ""
+
+#: admin/views/settings.php:127
+msgid "No API key generated yet. Click below to generate one."
+msgstr ""
+
+#: admin/views/contracts.php:28
+msgid "No contracts found."
+msgstr ""
+
+#: admin/views/templates.php:43
+#, php-format
+msgid "No templates found. <a href=\"%s\">Create your first template</a>"
+msgstr ""
+
+#: admin/views/templates.php:73
+msgid "No variables"
+msgstr ""
+
+#: admin/views/view-contract.php:37
+msgid "Not signed yet"
+msgstr ""
+
+#: admin/views/view-contract.php:72
+msgid "Open Signature Page"
+msgstr ""
+
+#: admin/views/settings.php:100
+#, php-format
+msgid ""
+"Paste your Google Cloud service account JSON credentials here. <a "
+"href=\"%s\" target=\"_blank\">Learn how to create service account keys</a>"
+msgstr ""
+
+#: admin/views/view-contract.php:41
+msgid "PDF Hash (SHA-256):"
+msgstr ""
+
+#: admin/views/contracts.php:39 admin/views/view-contract.php:27
+msgid "Pending"
+msgstr ""
+
+#: admin/views/settings.php:184
+msgid "PHP Functions for Other Plugins"
+msgstr ""
+
+#: admin/views/settings.php:135
+msgid "Regenerate API Key"
+msgstr ""
+
+#: admin/views/settings.php:146
+msgid "REST API Endpoints"
+msgstr ""
+
+#: admin/views/settings.php:107
+msgid "Save Settings"
+msgstr ""
+
+#: admin/views/edit-template.php:58
+msgid "Select the language for the signature page."
+msgstr ""
+
+#: admin/views/settings.php:94
+msgid "Service Account JSON"
+msgstr ""
+
+#: admin/views/view-contract.php:81
+msgid "Signature Details"
+msgstr ""
+
+#: admin/views/contracts.php:47
+msgid "Signature Link"
+msgstr ""
+
+#: admin/views/view-contract.php:69
+msgid "Signature URL:"
+msgstr ""
+
+#: admin/views/contracts.php:21 admin/views/contracts.php:37
+#: admin/views/view-contract.php:25
+msgid "Signed"
+msgstr ""
+
+#: admin/views/view-contract.php:92
+msgid "Signed At:"
+msgstr ""
+
+#: admin/views/view-contract.php:36
+msgid "Signed:"
+msgstr ""
+
+#: admin/views/view-contract.php:88
+msgid "Signer Email:"
+msgstr ""
+
+#: admin/views/view-contract.php:84
+msgid "Signer Name:"
+msgstr ""
+
+#: admin/views/settings.php:41
+msgid "SignFlow Settings"
+msgstr ""
+
+#: admin/views/templates.php:34
+msgid "Slug"
+msgstr ""
+
+#: admin/views/contracts.php:19
+msgid "Status"
+msgstr ""
+
+#: admin/views/view-contract.php:22
+msgid "Status:"
+msgstr ""
+
+#: admin/views/settings.php:46
+msgid "Storage Settings"
+msgstr ""
+
+#: admin/views/settings.php:49
+msgid "Storage Type"
+msgstr ""
+
+#: admin/views/contracts.php:18
+msgid "Template"
+msgstr ""
+
+#: admin/views/edit-template.php:63
+msgid "Template Content"
+msgstr ""
+
+#: admin/views/templates.php:25
+msgid "Template deleted successfully!"
+msgstr ""
+
+#: admin/views/edit-template.php:27
+msgid "Template Name"
+msgstr ""
+
+#: admin/views/templates.php:19
+msgid "Template saved successfully!"
+msgstr ""
+
+#: admin/views/settings.php:113
+msgid "Test Google Cloud Connection"
+msgstr ""
+
+#: admin/views/edit-template.php:84
+msgid "The following variables were found in your template:"
+msgstr ""
+
+#: admin/views/edit-template.php:93
+msgid "Update Template"
+msgstr ""
+
+#: admin/views/edit-template.php:76
+#, php-format
+msgid "Use %s for dynamic content. Example: %s, %s, %s"
+msgstr ""
+
+#: admin/views/settings.php:125
+#, php-format
+msgid "Use this key in the %s header for REST API requests"
+msgstr ""
+
+#: admin/views/templates.php:35
+msgid "Variables"
+msgstr ""
+
+#: admin/views/settings.php:174
+msgid "Verify contract signature"
+msgstr ""
+
+#: admin/views/contracts.php:45
+msgid "View"
+msgstr ""
+
+#: admin/views/settings.php:138
+msgid ""
+"Warning: Regenerating will invalidate the current API key and break any "
+"integrations using it."
+msgstr ""
+
+#. Name of the plugin
+msgid "WP SignFlow"
+msgstr ""
+
+#: admin/views/settings.php:89
+msgid "Your Google Cloud Storage bucket name"
+msgstr ""

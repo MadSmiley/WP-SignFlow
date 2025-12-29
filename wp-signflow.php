@@ -58,6 +58,7 @@ class WP_SignFlow {
         require_once WP_SIGNFLOW_PLUGIN_DIR . 'includes/class-signature-handler.php';
         require_once WP_SIGNFLOW_PLUGIN_DIR . 'includes/class-storage-manager.php';
         require_once WP_SIGNFLOW_PLUGIN_DIR . 'includes/class-audit-trail.php';
+        require_once WP_SIGNFLOW_PLUGIN_DIR . 'includes/class-translations.php';
         require_once WP_SIGNFLOW_PLUGIN_DIR . 'includes/class-public-api.php';
         require_once WP_SIGNFLOW_PLUGIN_DIR . 'admin/class-admin.php';
         require_once WP_SIGNFLOW_PLUGIN_DIR . 'public/class-public-signature.php';
@@ -80,6 +81,9 @@ class WP_SignFlow {
      * Initialize plugin
      */
     public function init() {
+        // Load text domain for translations
+        load_plugin_textdomain('wp-signflow', false, dirname(WP_SIGNFLOW_PLUGIN_BASENAME) . '/languages');
+
         // Initialize components
         WP_SignFlow_Database::get_instance();
         WP_SignFlow_Admin::get_instance();

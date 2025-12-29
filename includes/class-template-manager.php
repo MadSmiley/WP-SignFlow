@@ -12,7 +12,7 @@ class WP_SignFlow_Template_Manager {
     /**
      * Create a new template
      */
-    public static function create_template($name, $content, $variables = array()) {
+    public static function create_template($name, $content, $variables = array(), $language = 'en') {
         global $wpdb;
         $table = WP_SignFlow_Database::get_table('templates');
 
@@ -25,9 +25,10 @@ class WP_SignFlow_Template_Manager {
                 'slug' => $slug,
                 'content' => wp_kses_post($content),
                 'variables' => maybe_serialize($variables),
+                'language' => sanitize_text_field($language),
                 'created_by' => get_current_user_id()
             ),
-            array('%s', '%s', '%s', '%s', '%d')
+            array('%s', '%s', '%s', '%s', '%s', '%d')
         );
 
         if ($result) {
@@ -61,6 +62,11 @@ class WP_SignFlow_Template_Manager {
 
         if (isset($data['variables'])) {
             $update_data['variables'] = maybe_serialize($data['variables']);
+            $format[] = '%s';
+        }
+
+        if (isset($data['language'])) {
+            $update_data['language'] = sanitize_text_field($data['language']);
             $format[] = '%s';
         }
 
