@@ -1,0 +1,115 @@
+/**
+ * Admin styles
+ */
+
+.signflow-admin-header {
+    background: white;
+    padding: 20px;
+    margin: 20px 0;
+    border-left: 4px solid #2271b1;
+}
+
+.signflow-info-box {
+    background: #f0f6fc;
+    border: 1px solid #c3dcef;
+    padding: 15px;
+    margin: 20px 0;
+    border-radius: 4px;
+}
+
+.signflow-info-box h3 {
+    margin-top: 0;
+    color: #2271b1;
+}
+
+.signflow-status-badge {
+    display: inline-block;
+    padding: 4px 8px;
+    border-radius: 3px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.signflow-status-badge.signed {
+    background: #c6efce;
+    color: #006100;
+}
+
+.signflow-status-badge.pending {
+    background: #ffeb9c;
+    color: #9c6500;
+}
+
+.signflow-contract-preview {
+    border: 1px solid #ddd;
+    padding: 20px;
+    background: #fafafa;
+    max-height: 400px;
+    overflow-y: auto;
+    margin: 15px 0;
+}
+
+.signflow-variable-tag {
+    display: inline-block;
+    background: #f0f0f0;
+    padding: 2px 8px;
+    margin: 2px;
+    border-radius: 3px;
+    font-family: monospace;
+    font-size: 13px;
+}
+
+.signflow-code-block {
+    background: #f5f5f5;
+    border: 1px solid #ddd;
+    padding: 15px;
+    font-family: monospace;
+    font-size: 13px;
+    overflow-x: auto;
+    margin: 15px 0;
+}
+
+.signflow-audit-timeline {
+    position: relative;
+    padding-left: 30px;
+}
+
+.signflow-audit-timeline::before {
+    content: '';
+    position: absolute;
+    left: 10px;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: #ddd;
+}
+
+.signflow-audit-event {
+    position: relative;
+    padding: 10px 0;
+}
+
+.signflow-audit-event::before {
+    content: '';
+    position: absolute;
+    left: -24px;
+    top: 15px;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #2271b1;
+    border: 2px solid white;
+}
+
+.signflow-settings-section {
+    background: white;
+    padding: 20px;
+    margin: 20px 0;
+    border: 1px solid #ccc;
+}
+
+.signflow-settings-section h2 {
+    margin-top: 0;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 10px;
+}

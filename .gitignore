@@ -1,0 +1,24 @@
+# Composer
+/vendor/
+composer.lock
+
+# IDE
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# OS
+.DS_Store
+Thumbs.db
+
+# WordPress
+*.log
+.htaccess
+
+# Node (if you add build tools later)
+node_modules/
+package-lock.json
+
+# Example file
+example-integration.php
