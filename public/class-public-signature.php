@@ -259,7 +259,7 @@ class WP_SignFlow_Public_Signature {
                             </div>
 
                             <div class="consent-checkbox">
-                                <input type="checkbox" id="consent" name="consent" required>
+                                <input type="checkbox" id="consent" name="consent" value="yes" required>
                                 <label for="consent">
                                     I have read and understood the contract above. I consent to sign this contract electronically
                                     and understand that my electronic signature is legally binding and has the same effect as a

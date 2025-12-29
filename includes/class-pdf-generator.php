@@ -229,16 +229,7 @@ class WP_SignFlow_PDF_Generator {
         $signer_name = $signature ? $signature->signer_name : '';
         $signed_date = current_time('mysql');
 
-        // Determine file type
-        $is_pdf = substr($contract->pdf_path, -4) === '.pdf';
-
-        if ($is_pdf && self::is_fpdf_available()) {
-            // Add signature to PDF
-            return self::add_signature_to_fpdf($contract, $signature_image_path, $signer_name, $signed_date);
-        } else {
-            // Add signature to HTML
-            return self::add_signature_to_html($contract_id, $signature_image_path, $signer_name, $signed_date);
-        }
+        return self::add_signature_to_fpdf($contract, $signature_image_path, $signer_name, $signed_date);
     }
 
     /**
@@ -307,110 +298,6 @@ class WP_SignFlow_PDF_Generator {
         }
     }
 
-    /**
-     * Add signature to HTML version
-     */
-    private static function add_signature_to_html($contract_id, $signature_image_path, $signer_name, $signed_date) {
-        $contract = WP_SignFlow_Contract_Generator::get_contract($contract_id);
-        $html_content = $contract->contract_data['content'];
-
-        // Get signature image URL
-        $signature_url = '';
-        if (file_exists($signature_image_path)) {
-            $signature_url = wp_upload_dir()['baseurl'] . '/wp-signflow/' . basename($signature_image_path);
-        }
-
-        // Add signature section
-        $signature_section = '
-<div style="margin-top: 50px; padding-top: 20px; border-top: 2px solid #000; page-break-inside: avoid;">
-    <h2>Signature du Document</h2>
-
-    <div style="margin: 20px 0;">
-        <p><strong>Nom du signataire:</strong> ' . esc_html($signer_name) . '</p>
-        <p><strong>Date de signature:</strong> ' . esc_html($signed_date) . '</p>
-    </div>
-
-    <div style="margin: 20px 0;">';
-
-        if ($signature_url) {
-            $signature_section .= '
-        <p style="margin-bottom: 10px;"><strong>Signature:</strong></p>
-        <img src="' . esc_url($signature_url) . '" alt="Signature" style="max-width: 300px; border: 1px solid #ccc; padding: 10px; background: white;">';
-        }
-
-        $signature_section .= '
-    </div>
-
-    <div style="margin-top: 30px; padding: 15px; background: #f5f5f5; border-left: 4px solid #2271b1; font-size: 10pt;">
-        <p style="margin: 0;"><strong>Certification de signature électronique</strong></p>
-        <p style="margin: 5px 0 0 0; font-size: 9pt;">
-            Document signé électroniquement le ' . esc_html(date('d/m/Y à H:i:s', strtotime($signed_date))) . '.<br>
-            La signature a été capturée de manière sécurisée et horodatée.<br>
-            Un hash SHA-256 a été calculé pour garantir l\'intégrité du document.
-        </p>
-    </div>
-</div>';
-
-        $html_content .= $signature_section;
-
-        // Regenerate document with signature
-        $filename = 'contract_' . $contract_id . '_signed_' . time() . '.html';
-        $upload_dir = wp_upload_dir();
-        $signflow_dir = $upload_dir['basedir'] . '/wp-signflow';
-
-        // Create full HTML
-        $full_html = '<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="UTF-8">
-    <title>Contract #' . $contract_id . ' - Signed</title>
-    <style>
-        @page { size: A4; margin: 15mm; }
-        body { font-family: Arial, Helvetica, sans-serif; font-size: 11pt; line-height: 1.6; color: #000; margin: 0; padding: 20px; max-width: 800px; }
-        h1 { font-size: 18pt; margin-bottom: 10px; color: #333; }
-        h2 { font-size: 14pt; margin-top: 15px; margin-bottom: 8px; color: #555; }
-        h3 { font-size: 12pt; margin-top: 12px; margin-bottom: 6px; color: #666; }
-        p { margin: 8px 0; }
-        strong, b { font-weight: bold; }
-        @media print { body { margin: 0; padding: 15mm; } }
-    </style>
-</head>
-<body>
-    <div style="text-align: center; margin-bottom: 30px; padding-bottom: 15px; border-bottom: 2px solid #333;">
-        <h2>Document Contractuel Signé</h2>
-        <p style="font-size: 10pt; color: #666;">Référence: #' . $contract_id . '</p>
-    </div>
-    ' . $html_content . '
-</body>
-</html>';
-
-        $filepath = $signflow_dir . '/' . $filename;
-
-        if (file_put_contents($filepath, $full_html) !== false) {
-            // Calculate hash
-            $hash = hash_file('sha256', $filepath);
-
-            // Update contract
-            global $wpdb;
-            $table = WP_SignFlow_Database::get_table('contracts');
-            $wpdb->update(
-                $table,
-                array(
-                    'pdf_path' => $filename,
-                    'pdf_hash' => $hash,
-                    'status' => 'signed',
-                    'signed_at' => $signed_date
-                ),
-                array('id' => $contract_id),
-                array('%s', '%s', '%s', '%s'),
-                array('%d')
-            );
-
-            return $filename;
-        }
-
-        return new WP_Error('save_failed', 'Failed to save signed document');
-    }
 
     /**
      * Get file path
