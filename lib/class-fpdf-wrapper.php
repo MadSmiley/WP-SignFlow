@@ -144,7 +144,13 @@ class WP_SignFlow_FPDF_Wrapper extends FPDF {
     /**
      * Decode HTML entities
      */
-    private function decode_text($text) {
+    public function decode_text($text) {
+        // Handle null or empty input
+        if ($text === null || $text === '') {
+            return '';
+        }
+
+        $text = (string) $text;
         $text = html_entity_decode($text, ENT_QUOTES, 'UTF-8');
         // Convert UTF-8 to ISO-8859-1 for FPDF
         $text = iconv('UTF-8', 'ISO-8859-1//TRANSLIT', $text);

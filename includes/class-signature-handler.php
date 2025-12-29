@@ -82,25 +82,44 @@ class WP_SignFlow_Signature_Handler {
         $pdf_path = WP_SignFlow_PDF_Generator::get_pdf_path($pdf_result);
         $hash = WP_SignFlow_PDF_Generator::calculate_hash($pdf_path);
 
+        // Generate certificate
+        $signed_date = current_time('mysql');
+        $certificate_result = WP_SignFlow_PDF_Generator::generate_certificate(
+            $contract_id,
+            $hash,
+            $signer_info['name'] ?? '',
+            $signer_info['email'] ?? '',
+            $signed_date
+        );
+
+        $certificate_path = is_wp_error($certificate_result) ? null : $certificate_result;
+
         // Update contract
         $wpdb->update(
             WP_SignFlow_Database::get_table('contracts'),
             array(
                 'pdf_hash' => $hash,
+                'certificate_path' => $certificate_path,
                 'status' => 'signed',
-                'signed_at' => current_time('mysql'),
+                'signed_at' => $signed_date,
                 'ip_address' => $ip_address,
                 'user_agent' => substr($user_agent, 0, 500)
             ),
             array('id' => $contract_id),
-            array('%s', '%s', '%s', '%s', '%s'),
+            array('%s', '%s', '%s', '%s', '%s', '%s'),
             array('%d')
         );
+
+        // Delete signature image (no longer needed)
+        if (file_exists($signature_image)) {
+            @unlink($signature_image);
+        }
 
         // Log completion
         WP_SignFlow_Audit_Trail::log_event($contract_id, 'contract_signed', array(
             'hash' => $hash,
-            'pdf_file' => $pdf_result
+            'pdf_file' => $pdf_result,
+            'certificate_file' => $certificate_path
         ));
 
         // Store in configured storage (Google Cloud or local)

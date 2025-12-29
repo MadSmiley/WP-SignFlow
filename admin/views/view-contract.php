@@ -42,6 +42,28 @@ if (!$contract) {
                     <td><code><?php echo esc_html($contract->pdf_hash); ?></code></td>
                 </tr>
             <?php endif; ?>
+            <?php if ($contract->pdf_path): ?>
+                <tr>
+                    <th>Documents:</th>
+                    <td>
+                        <?php
+                        $upload_dir = wp_upload_dir();
+                        $pdf_url = $upload_dir['baseurl'] . '/wp-signflow/' . $contract->pdf_path;
+                        ?>
+                        <a href="<?php echo esc_url($pdf_url); ?>" target="_blank" class="button button-primary">
+                            📄 Download Contract PDF
+                        </a>
+                        <?php if (isset($contract->certificate_path) && $contract->certificate_path): ?>
+                            <?php
+                            $cert_url = $upload_dir['baseurl'] . '/wp-signflow/' . $contract->certificate_path;
+                            ?>
+                            <a href="<?php echo esc_url($cert_url); ?>" target="_blank" class="button button-secondary" style="margin-left: 10px;">
+                                🔒 Download Certificate
+                            </a>
+                        <?php endif; ?>
+                    </td>
+                </tr>
+            <?php endif; ?>
             <?php if ($contract->status === 'pending'): ?>
                 <tr>
                     <th>Signature URL:</th>
@@ -74,25 +96,9 @@ if (!$contract) {
                     <th>IP Address:</th>
                     <td><?php echo esc_html($signature->ip_address); ?></td>
                 </tr>
-                <?php if ($signature->signature_image): ?>
-                    <tr>
-                        <th>Signature:</th>
-                        <td>
-                            <img src="<?php echo esc_url(wp_upload_dir()['baseurl'] . '/wp-signflow/' . $signature->signature_image); ?>"
-                                 style="max-width: 300px; border: 1px solid #ccc; padding: 10px; background: white;">
-                        </td>
-                    </tr>
-                <?php endif; ?>
             </table>
         </div>
     <?php endif; ?>
-
-    <div style="background: white; padding: 20px; margin: 20px 0; border: 1px solid #ccc;">
-        <h2>Contract Content</h2>
-        <div style="border: 1px solid #ddd; padding: 20px; background: #fafafa;">
-            <?php echo wp_kses_post($contract->contract_data['content']); ?>
-        </div>
-    </div>
 
     <?php if (!empty($audit_trail)): ?>
         <div style="background: white; padding: 20px; margin: 20px 0; border: 1px solid #ccc;">

@@ -27,7 +27,7 @@ class WP_SignFlow_Database {
 
         // Templates table
         $table_templates = $wpdb->prefix . 'signflow_templates';
-        $sql_templates = "CREATE TABLE IF NOT EXISTS $table_templates (
+        $sql_templates = "CREATE TABLE $table_templates (
             id bigint(20) NOT NULL AUTO_INCREMENT,
             name varchar(255) NOT NULL,
             slug varchar(255) NOT NULL,
@@ -42,15 +42,17 @@ class WP_SignFlow_Database {
 
         // Contracts table
         $table_contracts = $wpdb->prefix . 'signflow_contracts';
-        $sql_contracts = "CREATE TABLE IF NOT EXISTS $table_contracts (
+        $sql_contracts = "CREATE TABLE $table_contracts (
             id bigint(20) NOT NULL AUTO_INCREMENT,
             template_id bigint(20),
             contract_token varchar(64) NOT NULL,
             contract_data longtext,
             pdf_path varchar(500),
             pdf_hash varchar(64),
+            certificate_path varchar(500),
             status varchar(20) DEFAULT 'pending',
             signed_at datetime,
+            expires_at datetime,
             ip_address varchar(45),
             user_agent text,
             metadata longtext,
@@ -59,12 +61,13 @@ class WP_SignFlow_Database {
             PRIMARY KEY  (id),
             UNIQUE KEY contract_token (contract_token),
             KEY template_id (template_id),
-            KEY status (status)
+            KEY status (status),
+            KEY expires_at (expires_at)
         ) $charset_collate;";
 
         // Signatures table
         $table_signatures = $wpdb->prefix . 'signflow_signatures';
-        $sql_signatures = "CREATE TABLE IF NOT EXISTS $table_signatures (
+        $sql_signatures = "CREATE TABLE $table_signatures (
             id bigint(20) NOT NULL AUTO_INCREMENT,
             contract_id bigint(20) NOT NULL,
             signature_data longtext NOT NULL,
@@ -81,7 +84,7 @@ class WP_SignFlow_Database {
 
         // Audit trail table
         $table_audit = $wpdb->prefix . 'signflow_audit';
-        $sql_audit = "CREATE TABLE IF NOT EXISTS $table_audit (
+        $sql_audit = "CREATE TABLE $table_audit (
             id bigint(20) NOT NULL AUTO_INCREMENT,
             contract_id bigint(20),
             event_type varchar(50) NOT NULL,

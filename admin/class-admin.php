@@ -118,6 +118,7 @@ class WP_SignFlow_Admin {
      */
     public function register_settings() {
         register_setting('signflow_settings', 'signflow_storage_type');
+        register_setting('signflow_settings', 'signflow_storage_path');
         register_setting('signflow_settings', 'signflow_gcs_bucket');
         register_setting('signflow_settings', 'signflow_gcs_credentials');
         register_setting('signflow_settings', 'signflow_api_key');
@@ -149,6 +150,25 @@ class WP_SignFlow_Admin {
      * Render contracts page
      */
     public function render_contracts_page() {
+        // Handle delete action
+        if (isset($_GET['action']) && $_GET['action'] === 'delete' && isset($_GET['id'])) {
+            $contract_id = intval($_GET['id']);
+
+            // Verify nonce
+            if (!wp_verify_nonce($_GET['_wpnonce'], 'delete_contract_' . $contract_id)) {
+                wp_die('Security check failed');
+            }
+
+            // Delete contract
+            $result = WP_SignFlow_Contract_Generator::delete_contract($contract_id);
+
+            if (is_wp_error($result)) {
+                echo '<div class="notice notice-error"><p>' . esc_html($result->get_error_message()) . '</p></div>';
+            } else {
+                echo '<div class="notice notice-success"><p>Contract deleted successfully.</p></div>';
+            }
+        }
+
         global $wpdb;
         $table = WP_SignFlow_Database::get_table('contracts');
 

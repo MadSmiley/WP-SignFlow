@@ -25,6 +25,10 @@ class WP_SignFlow_Contract_Generator {
         // Generate unique token
         $token = self::generate_token();
 
+        // Calculate expiration date (30 days from now by default)
+        $expiration_days = isset($metadata['expiration_days']) ? (int)$metadata['expiration_days'] : 30;
+        $expires_at = date('Y-m-d H:i:s', strtotime('+' . $expiration_days . ' days'));
+
         // Save contract to database
         global $wpdb;
         $table = WP_SignFlow_Database::get_table('contracts');
@@ -39,9 +43,10 @@ class WP_SignFlow_Contract_Generator {
                     'content' => $content
                 )),
                 'status' => 'pending',
+                'expires_at' => $expires_at,
                 'metadata' => maybe_serialize($metadata)
             ),
-            array('%d', '%s', '%s', '%s', '%s')
+            array('%d', '%s', '%s', '%s', '%s', '%s')
         );
 
         if (!$result) {
@@ -84,6 +89,102 @@ class WP_SignFlow_Contract_Generator {
      */
     private static function generate_token() {
         return bin2hex(random_bytes(32));
+    }
+
+    /**
+     * Delete expired unsigned contracts
+     */
+    public static function delete_expired_contracts() {
+        global $wpdb;
+        $table = WP_SignFlow_Database::get_table('contracts');
+
+        // Find expired unsigned contracts
+        $expired_contracts = $wpdb->get_results($wpdb->prepare(
+            "SELECT id, pdf_path FROM $table
+            WHERE status = 'pending'
+            AND expires_at < %s",
+            current_time('mysql')
+        ));
+
+        if (!$expired_contracts) {
+            return 0;
+        }
+
+        $upload_dir = wp_upload_dir();
+        $signflow_dir = $upload_dir['basedir'] . '/wp-signflow';
+        $deleted_count = 0;
+
+        foreach ($expired_contracts as $contract) {
+            // Delete PDF file
+            if ($contract->pdf_path) {
+                $filepath = $signflow_dir . '/' . $contract->pdf_path;
+                if (file_exists($filepath)) {
+                    @unlink($filepath);
+                }
+            }
+
+            // Delete from database
+            $wpdb->delete(
+                $table,
+                array('id' => $contract->id),
+                array('%d')
+            );
+
+            // Log deletion
+            WP_SignFlow_Audit_Trail::log_event($contract->id, 'contract_expired_deleted', array(
+                'reason' => 'automatic_cleanup'
+            ));
+
+            $deleted_count++;
+        }
+
+        return $deleted_count;
+    }
+
+    /**
+     * Delete a specific contract (manual deletion)
+     */
+    public static function delete_contract($contract_id) {
+        global $wpdb;
+        $table = WP_SignFlow_Database::get_table('contracts');
+
+        // Get contract
+        $contract = self::get_contract($contract_id);
+        if (!$contract) {
+            return new WP_Error('invalid_contract', 'Contract not found');
+        }
+
+        // Only allow deletion of unsigned contracts
+        if ($contract->status === 'signed') {
+            return new WP_Error('contract_signed', 'Cannot delete signed contracts');
+        }
+
+        // Delete PDF file
+        if ($contract->pdf_path) {
+            $upload_dir = wp_upload_dir();
+            $filepath = $upload_dir['basedir'] . '/wp-signflow/' . $contract->pdf_path;
+            if (file_exists($filepath)) {
+                @unlink($filepath);
+            }
+        }
+
+        // Delete from database
+        $result = $wpdb->delete(
+            $table,
+            array('id' => $contract_id),
+            array('%d')
+        );
+
+        if (!$result) {
+            return new WP_Error('delete_failed', 'Failed to delete contract');
+        }
+
+        // Log deletion
+        WP_SignFlow_Audit_Trail::log_event($contract_id, 'contract_deleted', array(
+            'reason' => 'manual_deletion'
+        ));
+
+        return true;
     }
 
     /**

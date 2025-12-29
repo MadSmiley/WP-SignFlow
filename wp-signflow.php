@@ -71,6 +71,9 @@ class WP_SignFlow {
         register_deactivation_hook(__FILE__, array($this, 'deactivate'));
 
         add_action('plugins_loaded', array($this, 'init'));
+
+        // Cleanup cron
+        add_action('signflow_cleanup_expired_contracts', array('WP_SignFlow_Contract_Generator', 'delete_expired_contracts'));
     }
 
     /**
@@ -99,6 +102,11 @@ class WP_SignFlow {
             file_put_contents($signflow_dir . '/.htaccess', 'deny from all');
         }
 
+        // Schedule cleanup cron (daily)
+        if (!wp_next_scheduled('signflow_cleanup_expired_contracts')) {
+            wp_schedule_event(time(), 'daily', 'signflow_cleanup_expired_contracts');
+        }
+
         flush_rewrite_rules();
     }
 
@@ -106,6 +114,12 @@ class WP_SignFlow {
      * Plugin deactivation
      */
     public function deactivate() {
+        // Remove scheduled cron
+        $timestamp = wp_next_scheduled('signflow_cleanup_expired_contracts');
+        if ($timestamp) {
+            wp_unschedule_event($timestamp, 'signflow_cleanup_expired_contracts');
+        }
+
         flush_rewrite_rules();
     }
 }

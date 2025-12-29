@@ -27,9 +27,14 @@ if (isset($_POST['test_gcs'])) {
 }
 
 $storage_type = get_option('signflow_storage_type', 'local');
+$storage_path = get_option('signflow_storage_path', '');
 $gcs_bucket = get_option('signflow_gcs_bucket', '');
 $gcs_credentials = get_option('signflow_gcs_credentials', '');
 $api_key = get_option('signflow_api_key', '');
+
+// Default storage path
+$default_upload_dir = wp_upload_dir();
+$default_storage_path = $default_upload_dir['basedir'] . '/wp-signflow';
 ?>
 
 <div class="wrap">
@@ -55,6 +60,20 @@ $api_key = get_option('signflow_api_key', '');
                         Google Cloud Storage
                     </label>
                     <p class="description">Choose where to store signed contracts</p>
+                </td>
+            </tr>
+            <tr>
+                <th scope="row">
+                    <label for="signflow_storage_path">Local Storage Path</label>
+                </th>
+                <td>
+                    <input type="text" name="signflow_storage_path" id="signflow_storage_path"
+                           value="<?php echo esc_attr($storage_path); ?>" class="regular-text"
+                           placeholder="<?php echo esc_attr($default_storage_path); ?>">
+                    <p class="description">
+                        Custom storage directory path (absolute path). Leave empty to use default:
+                        <code><?php echo esc_html($default_storage_path); ?></code>
+                    </p>
                 </td>
             </tr>
         </table>

@@ -45,6 +45,9 @@ if (!defined('ABSPATH')) {
                             <a href="<?php echo admin_url('admin.php?page=wp-signflow-view-contract&id=' . $contract->id); ?>">View</a>
                             <?php if ($contract->status === 'pending'): ?>
                                 | <a href="<?php echo WP_SignFlow_Contract_Generator::get_signature_url($contract->contract_token); ?>" target="_blank">Signature Link</a>
+                                | <a href="<?php echo wp_nonce_url(admin_url('admin.php?page=wp-signflow-contracts&action=delete&id=' . $contract->id), 'delete_contract_' . $contract->id); ?>"
+                                     onclick="return confirm('Are you sure you want to delete this unsigned contract?');"
+                                     style="color: #dc3232;">Delete</a>
                             <?php endif; ?>
                         </td>
                     </tr>

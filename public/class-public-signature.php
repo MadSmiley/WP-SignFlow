@@ -227,9 +227,26 @@ class WP_SignFlow_Public_Signature {
                     </div>
                     <div class="alert alert-error" id="error-message"></div>
 
-                    <h2>Contract Preview</h2>
+                    <h2>Contract Document</h2>
                     <div class="contract-preview">
-                        <?php echo wp_kses_post($contract->contract_data['content']); ?>
+                        <?php
+                        if ($contract->pdf_path) {
+                            $upload_dir = wp_upload_dir();
+                            $pdf_url = $upload_dir['baseurl'] . '/wp-signflow/' . $contract->pdf_path;
+
+                            // Check if it's a PDF or HTML
+                            if (substr($contract->pdf_path, -4) === '.pdf') {
+                                // Display PDF in iframe
+                                echo '<iframe src="' . esc_url($pdf_url) . '" style="width: 100%; height: 500px; border: none;"></iframe>';
+                            } else {
+                                // Fallback to HTML preview
+                                echo '<iframe src="' . esc_url($pdf_url) . '" style="width: 100%; height: 500px; border: none;"></iframe>';
+                            }
+                        } else {
+                            // Fallback to content preview
+                            echo wp_kses_post($contract->contract_data['content']);
+                        }
+                        ?>
                     </div>
 
                     <div class="signature-section">

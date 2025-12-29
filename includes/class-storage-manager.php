@@ -11,6 +11,39 @@ if (!defined('ABSPATH')) {
 class WP_SignFlow_Storage_Manager {
 
     /**
+     * Get local storage directory path
+     */
+    public static function get_storage_dir() {
+        $custom_path = get_option('signflow_storage_path', '');
+
+        // Use custom path if set and exists
+        if (!empty($custom_path) && is_dir($custom_path) && is_writable($custom_path)) {
+            return rtrim($custom_path, '/\\');
+        }
+
+        // Default to wp-content/uploads/wp-signflow
+        $upload_dir = wp_upload_dir();
+        return $upload_dir['basedir'] . '/wp-signflow';
+    }
+
+    /**
+     * Get storage URL base
+     */
+    public static function get_storage_url() {
+        $custom_path = get_option('signflow_storage_path', '');
+        $upload_dir = wp_upload_dir();
+        $default_dir = $upload_dir['basedir'] . '/wp-signflow';
+
+        // If using custom path, we can't easily generate URL
+        if (!empty($custom_path) && $custom_path !== $default_dir) {
+            // Return empty - files from custom path should be served differently
+            return '';
+        }
+
+        return $upload_dir['baseurl'] . '/wp-signflow';
+    }
+
+    /**
      * Store signed contract based on configuration
      */
     public static function store_signed_contract($contract_id, $pdf_path) {

@@ -70,21 +70,8 @@ class WP_SignFlow_PDF_Generator {
             // Add page
             $pdf->AddPage();
 
-            // Add header
-            $pdf->SetFont('Arial', 'B', 12);
-            $pdf->Cell(0, 10, 'Document Contractuel', 0, 1, 'C');
-            $pdf->SetFont('Arial', '', 9);
-            $pdf->Cell(0, 5, 'Reference : #' . $contract_id . ' - Genere le ' . date('d/m/Y'), 0, 1, 'C');
-            $pdf->Ln(5);
-
-            // Add content
+            // Add content only (no header/footer)
             $pdf->add_html_content($html_content);
-
-            // Add footer
-            $pdf->Ln(10);
-            $pdf->SetFont('Arial', 'I', 8);
-            $pdf->SetTextColor(128, 128, 128);
-            $pdf->Cell(0, 5, 'Document genere par WP SignFlow - ' . get_bloginfo('name'), 0, 0, 'C');
 
             // Save PDF
             $filename = 'contract_' . $contract_id . '_' . time() . '.pdf';
@@ -148,39 +135,11 @@ class WP_SignFlow_PDF_Generator {
         table th { background-color: #f5f5f5; font-weight: bold; }
         @media print {
             body { margin: 0; padding: 15mm; }
-            .no-print { display: none; }
-        }
-        .print-header {
-            text-align: center;
-            margin-bottom: 30px;
-            padding-bottom: 15px;
-            border-bottom: 2px solid #333;
-        }
-        .print-footer {
-            margin-top: 30px;
-            padding-top: 15px;
-            border-top: 1px solid #ccc;
-            font-size: 9pt;
-            color: #666;
         }
     </style>
 </head>
 <body>
-    <div class="print-header">
-        <h2>Document Contractuel</h2>
-        <p style="font-size: 10pt; color: #666;">Référence: #' . $contract_id . ' - Généré le ' . date('d/m/Y à H:i') . '</p>
-    </div>
-
     ' . $html_content . '
-
-    <div class="print-footer">
-        <p>Document généré par WP SignFlow - ' . get_bloginfo('name') . '</p>
-        <p class="no-print" style="margin-top: 15px; padding: 10px; background: #fffacd; border: 1px solid #ffd700; border-radius: 4px;">
-            <strong>⚠️ FPDF manquant :</strong> Pour générer automatiquement des PDFs, téléchargez FPDF depuis
-            <a href="http://www.fpdf.org/" target="_blank">fpdf.org</a> et placez fpdf.php dans le dossier lib/ du plugin.<br>
-            En attendant, utilisez Ctrl+P → Enregistrer en PDF pour obtenir un PDF.
-        </p>
-    </div>
 </body>
 </html>';
 
@@ -251,14 +210,7 @@ class WP_SignFlow_PDF_Generator {
             $pdf->SetAutoPageBreak(true, 15);
             $pdf->AddPage();
 
-            // Header
-            $pdf->SetFont('Arial', 'B', 12);
-            $pdf->Cell(0, 10, 'Document Contractuel Signe', 0, 1, 'C');
-            $pdf->SetFont('Arial', '', 9);
-            $pdf->Cell(0, 5, 'Reference : #' . $contract_id, 0, 1, 'C');
-            $pdf->Ln(5);
-
-            // Content
+            // Content only (no header)
             $pdf->add_html_content($html_content);
 
             // Signature section
@@ -315,5 +267,95 @@ class WP_SignFlow_PDF_Generator {
             return false;
         }
         return hash_file('sha256', $filepath);
+    }
+
+    /**
+     * Generate certificate PDF
+     */
+    public static function generate_certificate($contract_id, $pdf_hash, $signer_name, $signer_email, $signed_date) {
+        if (!self::is_fpdf_available()) {
+            return new WP_Error('fpdf_not_available', 'FPDF library not available');
+        }
+
+        try {
+            require_once WP_SIGNFLOW_PLUGIN_DIR . 'lib/class-fpdf-wrapper.php';
+
+            $pdf = new WP_SignFlow_FPDF_Wrapper();
+            $pdf->SetTitle('Certificate - Contract #' . $contract_id);
+            $pdf->SetAuthor(get_bloginfo('name'));
+            $pdf->SetCreator('WP SignFlow');
+            $pdf->SetMargins(20, 20, 20);
+            $pdf->SetAutoPageBreak(true, 20);
+            $pdf->AddPage();
+
+            // Title
+            $pdf->SetFont('Arial', 'B', 20);
+            $pdf->SetTextColor(34, 113, 177);
+            $pdf->Cell(0, 15, 'Certificate of Electronic Signature', 0, 1, 'C');
+            $pdf->Ln(10);
+
+            // Contract ID
+            $pdf->SetFont('Arial', 'B', 12);
+            $pdf->SetTextColor(0, 0, 0);
+            $pdf->Cell(0, 8, 'Contract Reference: #' . $contract_id, 0, 1);
+            $pdf->Ln(5);
+
+            // Signer Information
+            $pdf->SetFont('Arial', 'B', 14);
+            $pdf->Cell(0, 10, 'Signer Information', 0, 1);
+            $pdf->SetFont('Arial', '', 11);
+            $pdf->Cell(50, 7, 'Name:', 0, 0);
+            $pdf->Cell(0, 7, $pdf->decode_text($signer_name), 0, 1);
+            $pdf->Cell(50, 7, 'Email:', 0, 0);
+            $pdf->Cell(0, 7, $signer_email, 0, 1);
+            $pdf->Cell(50, 7, 'Date:', 0, 0);
+            $pdf->Cell(0, 7, date('d/m/Y \a\t H:i:s', strtotime($signed_date)), 0, 1);
+            $pdf->Ln(10);
+
+            // Document Hash
+            $pdf->SetFont('Arial', 'B', 14);
+            $pdf->Cell(0, 10, 'Document Integrity', 0, 1);
+            $pdf->SetFont('Arial', '', 10);
+            $pdf->Cell(50, 7, 'Hash Algorithm:', 0, 0);
+            $pdf->Cell(0, 7, 'SHA-256', 0, 1);
+            $pdf->Cell(50, 7, 'Document Hash:', 0, 1);
+            $pdf->SetFont('Courier', '', 9);
+            $pdf->MultiCell(0, 5, $pdf_hash);
+            $pdf->Ln(10);
+
+            // Certification Statement
+            $pdf->SetFont('Arial', 'B', 14);
+            $pdf->Cell(0, 10, 'Certification', 0, 1);
+            $pdf->SetFont('Arial', '', 10);
+            $pdf->MultiCell(0, 6,
+                "This certificate attests that the referenced contract was electronically signed on " .
+                date('d/m/Y \a\t H:i:s', strtotime($signed_date)) . " by the person identified above.\n\n" .
+                "The document's integrity is guaranteed by the SHA-256 hash listed above. " .
+                "Any modification to the original document will result in a different hash value, " .
+                "thereby invalidating this certificate.\n\n" .
+                "The signature was captured securely with explicit consent from the signer, " .
+                "and all actions have been logged in an immutable audit trail."
+            );
+            $pdf->Ln(15);
+
+            // Footer
+            $pdf->SetFont('Arial', 'I', 8);
+            $pdf->SetTextColor(128, 128, 128);
+            $pdf->Cell(0, 5, 'Generated by WP SignFlow on ' . date('d/m/Y \a\t H:i:s'), 0, 1, 'C');
+            $pdf->Cell(0, 5, get_bloginfo('name') . ' - ' . get_bloginfo('url'), 0, 0, 'C');
+
+            // Save certificate
+            $filename = 'certificate_' . $contract_id . '_' . time() . '.pdf';
+            $upload_dir = wp_upload_dir();
+            $signflow_dir = $upload_dir['basedir'] . '/wp-signflow';
+            $filepath = $signflow_dir . '/' . $filename;
+
+            $pdf->Output('F', $filepath);
+
+            return $filename;
+
+        } catch (Exception $e) {
+            return new WP_Error('certificate_generation_failed', $e->getMessage());
+        }
     }
 }
