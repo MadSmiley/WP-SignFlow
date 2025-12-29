@@ -39,7 +39,7 @@ class WP_SignFlow_Admin {
             'dashicons-edit-page',
             30
         );
-
+        
         add_submenu_page(
             'wp-signflow',
             'Templates',
@@ -48,7 +48,7 @@ class WP_SignFlow_Admin {
             'wp-signflow',
             array($this, 'render_templates_page')
         );
-
+        
         add_submenu_page(
             'wp-signflow',
             'Contracts',
@@ -57,7 +57,7 @@ class WP_SignFlow_Admin {
             'wp-signflow-contracts',
             array($this, 'render_contracts_page')
         );
-
+        
         add_submenu_page(
             'wp-signflow',
             'Settings',
@@ -66,24 +66,25 @@ class WP_SignFlow_Admin {
             'wp-signflow-settings',
             array($this, 'render_settings_page')
         );
-
+        
         add_submenu_page(
-            null, // Hidden from menu
+            'wp-signflow-settings', // Hidden from menu
             'Edit Template',
             'Edit Template',
             'manage_options',
             'wp-signflow-edit-template',
             array($this, 'render_edit_template_page')
         );
-
+        
         add_submenu_page(
-            null, // Hidden from menu
+            'wp-signflow-settings', // Hidden from menu
             'View Contract',
             'View Contract',
             'manage_options',
             'wp-signflow-view-contract',
             array($this, 'render_view_contract_page')
         );
+        
     }
 
     /**
