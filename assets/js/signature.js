@@ -62,6 +62,26 @@
         // Store original button text
         submitBtn.data('original-text', submitBtn.text());
 
+        // Track consent checkbox timestamp
+        $('#consent').on('change', function() {
+            if ($(this).is(':checked')) {
+                const timestamp = new Date().toISOString();
+                $('#consent-timestamp').val(timestamp);
+            } else {
+                // Clear timestamp if unchecked
+                $('#consent-timestamp').val('');
+            }
+        });
+
+        // Track signature completion timestamp
+        const canvas = document.getElementById('signature-pad');
+        if (canvas && signaturePad) {
+            signaturePad.addEventListener('endStroke', function() {
+                const timestamp = new Date().toISOString();
+                $('#signature-timestamp').val(timestamp);
+            });
+        }
+
         form.on('submit', function(e) {
             e.preventDefault();
 

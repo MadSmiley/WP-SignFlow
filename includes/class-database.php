@@ -91,6 +91,7 @@ class WP_SignFlow_Database {
             contract_id bigint(20),
             event_type varchar(50) NOT NULL,
             event_data longtext,
+            previous_hash varchar(64),
             ip_address varchar(45),
             user_agent text,
             created_at datetime DEFAULT CURRENT_TIMESTAMP,
