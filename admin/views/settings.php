@@ -31,6 +31,7 @@ $storage_path = get_option('signflow_storage_path', '');
 $gcs_bucket = get_option('signflow_gcs_bucket', '');
 $gcs_credentials = get_option('signflow_gcs_credentials', '');
 $api_key = get_option('signflow_api_key', '');
+$certificate_language = get_option('signflow_certificate_language', 'en');
 
 // Default storage path
 $default_upload_dir = wp_upload_dir();
@@ -42,6 +43,22 @@ $default_storage_path = $default_upload_dir['basedir'] . '/wp-signflow';
 
     <form method="post" action="options.php">
         <?php settings_fields('signflow_settings'); ?>
+
+        <h2><?php _e('General Settings', 'wp-signflow'); ?></h2>
+        <table class="form-table">
+            <tr>
+                <th scope="row">
+                    <label for="signflow_certificate_language"><?php _e('Certificate Language', 'wp-signflow'); ?></label>
+                </th>
+                <td>
+                    <select name="signflow_certificate_language" id="signflow_certificate_language">
+                        <option value="en" <?php selected($certificate_language, 'en'); ?>>English</option>
+                        <option value="fr" <?php selected($certificate_language, 'fr'); ?>>Français</option>
+                    </select>
+                    <p class="description"><?php _e('Language used for generated signature certificates', 'wp-signflow'); ?></p>
+                </td>
+            </tr>
+        </table>
 
         <h2><?php _e('Storage Settings', 'wp-signflow'); ?></h2>
         <table class="form-table">

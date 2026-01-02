@@ -127,6 +127,7 @@ class WP_SignFlow_Admin {
      * Register settings
      */
     public function register_settings() {
+        register_setting('signflow_settings', 'signflow_certificate_language');
         register_setting('signflow_settings', 'signflow_storage_type');
         register_setting('signflow_settings', 'signflow_storage_path');
         register_setting('signflow_settings', 'signflow_gcs_bucket');
