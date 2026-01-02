@@ -371,7 +371,6 @@ class WP_SignFlow_Public_Signature {
                             <input type="hidden" name="nonce" value="<?php echo wp_create_nonce('signflow_signature'); ?>">
                             <input type="hidden" name="signature_data" id="signature-data">
                             <input type="hidden" name="consent_timestamp" id="consent-timestamp">
-                            <input type="hidden" name="signature_timestamp" id="signature-timestamp">
 
                             <button type="submit" class="btn btn-primary" id="submit-btn">
                                 <?php echo esc_html($translations['submit_button']); ?>
@@ -537,17 +536,15 @@ class WP_SignFlow_Public_Signature {
             wp_send_json_error(array('message' => 'Contract not found'));
         }
 
-        // Get timestamps
+        // Get consent timestamp
         $consent_timestamp = !empty($_POST['consent_timestamp']) ? sanitize_text_field($_POST['consent_timestamp']) : null;
-        $signature_timestamp = !empty($_POST['signature_timestamp']) ? sanitize_text_field($_POST['signature_timestamp']) : null;
 
         // Process signature
         $signer_info = array(
             'name' => sanitize_text_field($_POST['signer_name']),
             'email' => sanitize_email($_POST['signer_email']),
             'consent' => 'yes',
-            'consent_timestamp' => $consent_timestamp,
-            'signature_timestamp' => $signature_timestamp
+            'consent_timestamp' => $consent_timestamp
         );
 
         $result = WP_SignFlow_Signature_Handler::process_signature(

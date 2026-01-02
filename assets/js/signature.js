@@ -40,12 +40,7 @@
             minWidth: 1,
             maxWidth: 3,
             throttle: 0,
-            velocityFilterWeight: 0.7,
-            onEnd: function() {
-                // Track signature completion timestamp
-                const timestamp = new Date().toISOString();
-                $('#signature-timestamp').val(timestamp);
-            }
+            velocityFilterWeight: 0.7
         });
 
         // Clear button

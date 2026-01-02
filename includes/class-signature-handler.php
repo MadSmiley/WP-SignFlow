@@ -66,18 +66,15 @@ class WP_SignFlow_Signature_Handler {
             return new WP_Error('signature_save_failed', 'Failed to save signature');
         }
 
-        // Log audit event with timestamps
+        // Log audit event
         $audit_data = array(
             'signer_name' => $signer_info['name'] ?? '',
             'signer_email' => $signer_info['email'] ?? ''
         );
 
-        // Add timestamps if available
+        // Add consent timestamp if available
         if (!empty($signer_info['consent_timestamp'])) {
             $audit_data['consent_timestamp'] = $signer_info['consent_timestamp'];
-        }
-        if (!empty($signer_info['signature_timestamp'])) {
-            $audit_data['signature_timestamp'] = $signer_info['signature_timestamp'];
         }
 
         WP_SignFlow_Audit_Trail::log_event($contract_id, 'signature_captured', $audit_data);
