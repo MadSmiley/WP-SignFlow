@@ -50,6 +50,7 @@ class WP_SignFlow_Database {
             contract_data longtext,
             pdf_path varchar(500),
             pdf_hash varchar(64),
+            original_hash varchar(64),
             certificate_path varchar(500),
             status varchar(20) DEFAULT 'pending',
             signed_at datetime,
@@ -94,9 +95,7 @@ class WP_SignFlow_Database {
             user_agent text,
             created_at datetime DEFAULT CURRENT_TIMESTAMP,
             PRIMARY KEY  (id),
-            KEY contract_id (contract_id),
-            KEY event_type (event_type),
-            KEY created_at (created_at)
+            KEY contract_id (contract_id)
         ) $charset_collate;";
 
         require_once(ABSPATH . 'wp-admin/includes/upgrade.php');

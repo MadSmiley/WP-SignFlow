@@ -72,6 +72,10 @@ class WP_SignFlow_Signature_Handler {
             'signer_email' => $signer_info['email'] ?? ''
         ));
 
+        // Get original hash from database (calculated at contract generation)
+        $contract = WP_SignFlow_Contract_Generator::get_contract($contract_id);
+        $original_hash = $contract->original_hash;
+
         // Add signature to PDF
         $pdf_result = WP_SignFlow_PDF_Generator::add_signature_to_pdf($contract_id, $signature_image);
         if (is_wp_error($pdf_result)) {
@@ -80,13 +84,14 @@ class WP_SignFlow_Signature_Handler {
 
         // Calculate hash of signed PDF
         $pdf_path = WP_SignFlow_PDF_Generator::get_pdf_path($pdf_result);
-        $hash = WP_SignFlow_PDF_Generator::calculate_hash($pdf_path);
+        $signed_hash = WP_SignFlow_PDF_Generator::calculate_hash($pdf_path);
 
-        // Generate certificate
+        // Generate certificate with both hashes
         $signed_date = current_time('mysql');
         $certificate_result = WP_SignFlow_PDF_Generator::generate_certificate(
             $contract_id,
-            $hash,
+            $original_hash,
+            $signed_hash,
             $signer_info['name'] ?? '',
             $signer_info['email'] ?? '',
             $signed_date
@@ -98,7 +103,7 @@ class WP_SignFlow_Signature_Handler {
         $wpdb->update(
             WP_SignFlow_Database::get_table('contracts'),
             array(
-                'pdf_hash' => $hash,
+                'pdf_hash' => $signed_hash,
                 'certificate_path' => $certificate_path,
                 'status' => 'signed',
                 'signed_at' => $signed_date,
@@ -117,7 +122,8 @@ class WP_SignFlow_Signature_Handler {
 
         // Log completion
         WP_SignFlow_Audit_Trail::log_event($contract_id, 'contract_signed', array(
-            'hash' => $hash,
+            'original_hash' => $original_hash,
+            'signed_hash' => $signed_hash,
             'pdf_file' => $pdf_result,
             'certificate_file' => $certificate_path
         ));
@@ -128,7 +134,8 @@ class WP_SignFlow_Signature_Handler {
         return array(
             'success' => true,
             'contract_id' => $contract_id,
-            'hash' => $hash,
+            'original_hash' => $original_hash,
+            'signed_hash' => $signed_hash,
             'signed_at' => current_time('mysql')
         );
     }

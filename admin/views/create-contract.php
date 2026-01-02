@@ -64,6 +64,36 @@ $templates = WP_SignFlow_Template_Manager::get_templates();
                         <p class="description"><?php _e('Fill in the variables for the selected template.', 'wp-signflow'); ?></p>
                     </td>
                 </tr>
+
+                <tr>
+                    <th scope="row">
+                        <label for="signer_email"><?php _e('Signer Email', 'wp-signflow'); ?></label>
+                    </th>
+                    <td>
+                        <input type="email" name="signer_email" id="signer_email" class="regular-text">
+                        <p class="description"><?php _e('Email address of the person who will sign (optional).', 'wp-signflow'); ?></p>
+                    </td>
+                </tr>
+
+                <tr>
+                    <th scope="row">
+                        <label for="signer_name"><?php _e('Signer Name', 'wp-signflow'); ?></label>
+                    </th>
+                    <td>
+                        <input type="text" name="signer_name" id="signer_name" class="regular-text">
+                        <p class="description"><?php _e('Name of the person who will sign (optional).', 'wp-signflow'); ?></p>
+                    </td>
+                </tr>
+
+                <tr>
+                    <th scope="row">
+                        <label for="metadata"><?php _e('Metadata (JSON)', 'wp-signflow'); ?></label>
+                    </th>
+                    <td>
+                        <textarea name="metadata" id="metadata" class="large-text code" rows="4" placeholder='{"reservation_id": "12345", "custom_field": "value"}'></textarea>
+                        <p class="description"><?php _e('Custom metadata in JSON format for integration with other plugins (optional).', 'wp-signflow'); ?></p>
+                    </td>
+                </tr>
             </tbody>
         </table>
 

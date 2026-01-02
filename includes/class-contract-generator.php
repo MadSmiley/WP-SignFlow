@@ -55,17 +55,22 @@ class WP_SignFlow_Contract_Generator {
 
         $contract_id = $wpdb->insert_id;
 
-        // Log audit event
-        WP_SignFlow_Audit_Trail::log_event($contract_id, 'contract_generated', array(
-            'template_id' => $template_id,
-            'variables' => array_keys($variables)
-        ));
-
         // Generate PDF
         $pdf_result = WP_SignFlow_PDF_Generator::generate_pdf($contract_id, $content);
         if (is_wp_error($pdf_result)) {
             return $pdf_result;
         }
+
+        // Get contract with hash to log in audit trail
+        $contract = self::get_contract($contract_id);
+
+        // Log audit event with original hash
+        WP_SignFlow_Audit_Trail::log_event($contract_id, 'contract_generated', array(
+            'template_id' => $template_id,
+            'variables' => array_keys($variables),
+            'pdf_file' => $pdf_result,
+            'original_hash' => $contract->original_hash
+        ));
 
         return array(
             'contract_id' => $contract_id,

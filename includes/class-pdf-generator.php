@@ -81,16 +81,23 @@ class WP_SignFlow_PDF_Generator {
 
             $pdf->Output('F', $filepath);
 
-            // Update contract with PDF path
+            // Calculate hash of original document
+            $original_hash = hash_file('sha256', $filepath);
+
+            // Update contract with PDF path and original hash
             global $wpdb;
             $table = WP_SignFlow_Database::get_table('contracts');
             $wpdb->update(
                 $table,
-                array('pdf_path' => $filename),
+                array(
+                    'pdf_path' => $filename,
+                    'original_hash' => $original_hash
+                ),
                 array('id' => $contract_id),
-                array('%s'),
+                array('%s', '%s'),
                 array('%d')
             );
+
 
             return $filename;
 
@@ -149,16 +156,23 @@ class WP_SignFlow_PDF_Generator {
         $filepath = $signflow_dir . '/' . $filename;
 
         if (file_put_contents($filepath, $html) !== false) {
-            // Update contract with file path
+            // Calculate hash of original document
+            $original_hash = hash_file('sha256', $filepath);
+
+            // Update contract with file path and original hash
             global $wpdb;
             $table = WP_SignFlow_Database::get_table('contracts');
             $wpdb->update(
                 $table,
-                array('pdf_path' => $filename),
+                array(
+                    'pdf_path' => $filename,
+                    'original_hash' => $original_hash
+                ),
                 array('id' => $contract_id),
-                array('%s'),
+                array('%s', '%s'),
                 array('%d')
             );
+
 
             return $filename;
         }
@@ -196,6 +210,16 @@ class WP_SignFlow_PDF_Generator {
      */
     private static function add_signature_to_fpdf($contract, $signature_image_path, $signer_name, $signed_date) {
         try {
+            // Ensure FPDF is loaded
+            if (!self::is_fpdf_available()) {
+                return new WP_Error('fpdf_not_available', 'FPDF library not available');
+            }
+
+            // Load FPDF if not already loaded
+            if (!class_exists('FPDF') && defined('FPDF_PATH')) {
+                require_once FPDF_PATH;
+            }
+
             require_once WP_SIGNFLOW_PLUGIN_DIR . 'lib/class-fpdf-wrapper.php';
 
             $contract_id = $contract->id;
@@ -272,12 +296,17 @@ class WP_SignFlow_PDF_Generator {
     /**
      * Generate certificate PDF
      */
-    public static function generate_certificate($contract_id, $pdf_hash, $signer_name, $signer_email, $signed_date) {
+    public static function generate_certificate($contract_id, $original_hash, $signed_hash, $signer_name, $signer_email, $signed_date) {
         if (!self::is_fpdf_available()) {
             return new WP_Error('fpdf_not_available', 'FPDF library not available');
         }
 
         try {
+            // Load FPDF if not already loaded
+            if (!class_exists('FPDF') && defined('FPDF_PATH')) {
+                require_once FPDF_PATH;
+            }
+
             require_once WP_SIGNFLOW_PLUGIN_DIR . 'lib/class-fpdf-wrapper.php';
 
             $pdf = new WP_SignFlow_FPDF_Wrapper();
@@ -316,11 +345,17 @@ class WP_SignFlow_PDF_Generator {
             $pdf->SetFont('Arial', 'B', 14);
             $pdf->Cell(0, 10, 'Document Integrity', 0, 1);
             $pdf->SetFont('Arial', '', 10);
-            $pdf->Cell(50, 7, 'Hash Algorithm:', 0, 0);
+            $pdf->Cell(60, 7, 'Hash Algorithm:', 0, 0);
             $pdf->Cell(0, 7, 'SHA-256', 0, 1);
-            $pdf->Cell(50, 7, 'Document Hash:', 0, 1);
-            $pdf->SetFont('Courier', '', 9);
-            $pdf->MultiCell(0, 5, $pdf_hash);
+
+            $pdf->Cell(60, 7, 'Original Document Hash:', 0, 1);
+            $pdf->SetFont('Courier', '', 8);
+            $pdf->MultiCell(0, 5, $original_hash);
+
+            $pdf->SetFont('Arial', '', 10);
+            $pdf->Cell(60, 7, 'Signed Document Hash:', 0, 1);
+            $pdf->SetFont('Courier', '', 8);
+            $pdf->MultiCell(0, 5, $signed_hash);
             $pdf->Ln(10);
 
             // Certification Statement
@@ -330,19 +365,14 @@ class WP_SignFlow_PDF_Generator {
             $pdf->MultiCell(0, 6,
                 "This certificate attests that the referenced contract was electronically signed on " .
                 date('d/m/Y \a\t H:i:s', strtotime($signed_date)) . " by the person identified above.\n\n" .
-                "The document's integrity is guaranteed by the SHA-256 hash listed above. " .
-                "Any modification to the original document will result in a different hash value, " .
+                "The document's integrity is guaranteed by the SHA-256 hashes listed above. " .
+                "The original document hash represents the unsigned document, and the signed document hash " .
+                "represents the document after signature was applied. " .
+                "Any modification to either document will result in a different hash value, " .
                 "thereby invalidating this certificate.\n\n" .
                 "The signature was captured securely with explicit consent from the signer, " .
                 "and all actions have been logged in an immutable audit trail."
             );
-            $pdf->Ln(15);
-
-            // Footer
-            $pdf->SetFont('Arial', 'I', 8);
-            $pdf->SetTextColor(128, 128, 128);
-            $pdf->Cell(0, 5, 'Generated by WP SignFlow on ' . date('d/m/Y \a\t H:i:s'), 0, 1, 'C');
-            $pdf->Cell(0, 5, get_bloginfo('name') . ' - ' . get_bloginfo('url'), 0, 0, 'C');
 
             // Save certificate
             $filename = 'certificate_' . $contract_id . '_' . time() . '.pdf';

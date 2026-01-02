@@ -284,6 +284,9 @@ class WP_SignFlow_Admin {
         // Get form data
         $template_id = isset($_POST['template_id']) ? intval($_POST['template_id']) : 0;
         $variables = isset($_POST['variables']) ? $_POST['variables'] : array();
+        $signer_email = isset($_POST['signer_email']) ? sanitize_email($_POST['signer_email']) : '';
+        $signer_name = isset($_POST['signer_name']) ? sanitize_text_field($_POST['signer_name']) : '';
+        $metadata_json = isset($_POST['metadata']) ? trim($_POST['metadata']) : '';
 
         // Validate
         if (empty($template_id)) {
@@ -297,8 +300,28 @@ class WP_SignFlow_Admin {
             $sanitized_variables[sanitize_text_field($key)] = sanitize_text_field($value);
         }
 
+        // Prepare metadata
+        $metadata = array();
+        if (!empty($signer_email)) {
+            $metadata['signer_email'] = $signer_email;
+        }
+        if (!empty($signer_name)) {
+            $metadata['signer_name'] = $signer_name;
+        }
+
+        // Parse custom metadata JSON
+        if (!empty($metadata_json)) {
+            $custom_metadata = json_decode($metadata_json, true);
+            if (json_last_error() === JSON_ERROR_NONE && is_array($custom_metadata)) {
+                $metadata['custom'] = $custom_metadata;
+            } else {
+                wp_redirect(admin_url('admin.php?page=wp-signflow-create-contract&error=' . urlencode(__('Invalid JSON format in metadata field.', 'wp-signflow'))));
+                exit;
+            }
+        }
+
         // Generate contract
-        $result = WP_SignFlow_Contract_Generator::generate_contract($template_id, $sanitized_variables);
+        $result = WP_SignFlow_Contract_Generator::generate_contract($template_id, $sanitized_variables, $metadata);
 
         if (is_wp_error($result)) {
             wp_redirect(admin_url('admin.php?page=wp-signflow-create-contract&error=' . urlencode($result->get_error_message())));

@@ -88,6 +88,11 @@ class WP_SignFlow_Public_Signature {
 
         // Get translations
         $translations = WP_SignFlow_Translations::get_signature_page_translations($language);
+
+        // Get metadata for pre-filling signer information
+        $metadata = !empty($contract->metadata) ? maybe_unserialize($contract->metadata) : array();
+        $prefill_name = !empty($metadata['signer_name']) ? $metadata['signer_name'] : '';
+        $prefill_email = !empty($metadata['signer_email']) ? $metadata['signer_email'] : '';
         ?>
         <!DOCTYPE html>
         <html <?php language_attributes(); ?>>
@@ -333,12 +338,12 @@ class WP_SignFlow_Public_Signature {
                         <form id="signature-form">
                             <div class="form-group">
                                 <label for="signer-name"><?php echo esc_html($translations['signer_name_label']); ?> *</label>
-                                <input type="text" id="signer-name" name="signer_name" placeholder="<?php echo esc_attr($translations['signer_name_placeholder']); ?>" required>
+                                <input type="text" id="signer-name" name="signer_name" placeholder="<?php echo esc_attr($translations['signer_name_placeholder']); ?>" value="<?php echo esc_attr($prefill_name); ?>" required>
                             </div>
 
                             <div class="form-group">
                                 <label for="signer-email"><?php echo esc_html($translations['signer_email_label']); ?> *</label>
-                                <input type="email" id="signer-email" name="signer_email" placeholder="<?php echo esc_attr($translations['signer_email_placeholder']); ?>" required>
+                                <input type="email" id="signer-email" name="signer_email" placeholder="<?php echo esc_attr($translations['signer_email_placeholder']); ?>" value="<?php echo esc_attr($prefill_email); ?>" required>
                             </div>
 
                             <div class="form-group">

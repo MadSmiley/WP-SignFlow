@@ -36,10 +36,16 @@ if (!$contract) {
                 <th><?php _e('Signed:', 'wp-signflow'); ?></th>
                 <td><?php echo $contract->signed_at ? esc_html($contract->signed_at) : __('Not signed yet', 'wp-signflow'); ?></td>
             </tr>
+            <?php if ($contract->original_hash): ?>
+                <tr>
+                    <th><?php _e('Original Document Hash:', 'wp-signflow'); ?></th>
+                    <td><code style="font-size: 11px;"><?php echo esc_html($contract->original_hash); ?></code></td>
+                </tr>
+            <?php endif; ?>
             <?php if ($contract->pdf_hash): ?>
                 <tr>
-                    <th><?php _e('PDF Hash (SHA-256):', 'wp-signflow'); ?></th>
-                    <td><code><?php echo esc_html($contract->pdf_hash); ?></code></td>
+                    <th><?php _e('Signed Document Hash:', 'wp-signflow'); ?></th>
+                    <td><code style="font-size: 11px;"><?php echo esc_html($contract->pdf_hash); ?></code></td>
                 </tr>
             <?php endif; ?>
             <?php if ($contract->pdf_path): ?>
@@ -49,9 +55,12 @@ if (!$contract) {
                         <?php
                         $upload_dir = wp_upload_dir();
                         $pdf_url = $upload_dir['baseurl'] . '/wp-signflow/' . $contract->pdf_path;
+
+                        // Determine if this is the original or signed version
+                        $is_signed = ($contract->status === 'signed');
                         ?>
                         <a href="<?php echo esc_url($pdf_url); ?>" target="_blank" class="button button-primary">
-                            📄 <?php _e('Download Contract PDF', 'wp-signflow'); ?>
+                            📄 <?php echo $is_signed ? __('Download Signed Contract', 'wp-signflow') : __('Download Original Contract', 'wp-signflow'); ?>
                         </a>
                         <?php if (isset($contract->certificate_path) && $contract->certificate_path): ?>
                             <?php
@@ -70,6 +79,27 @@ if (!$contract) {
                     <td>
                         <input type="text" readonly value="<?php echo esc_attr(WP_SignFlow_Contract_Generator::get_signature_url($contract->contract_token)); ?>" style="width: 100%; max-width: 600px;">
                         <br><a href="<?php echo esc_url(WP_SignFlow_Contract_Generator::get_signature_url($contract->contract_token)); ?>" target="_blank" class="button"><?php _e('Open Signature Page', 'wp-signflow'); ?></a>
+                    </td>
+                </tr>
+            <?php endif; ?>
+            <?php
+            // Display metadata if exists
+            $metadata = !empty($contract->metadata) ? maybe_unserialize($contract->metadata) : array();
+            if (!empty($metadata)):
+            ?>
+                <tr>
+                    <th><?php _e('Metadata:', 'wp-signflow'); ?></th>
+                    <td>
+                        <?php if (!empty($metadata['signer_email'])): ?>
+                            <strong><?php _e('Signer Email:', 'wp-signflow'); ?></strong> <?php echo esc_html($metadata['signer_email']); ?><br>
+                        <?php endif; ?>
+                        <?php if (!empty($metadata['signer_name'])): ?>
+                            <strong><?php _e('Signer Name:', 'wp-signflow'); ?></strong> <?php echo esc_html($metadata['signer_name']); ?><br>
+                        <?php endif; ?>
+                        <?php if (!empty($metadata['custom'])): ?>
+                            <br><strong><?php _e('Custom Data:', 'wp-signflow'); ?></strong>
+                            <pre style="background: #f5f5f5; padding: 10px; border: 1px solid #ddd; margin-top: 5px;"><?php echo esc_html(json_encode($metadata['custom'], JSON_PRETTY_PRINT)); ?></pre>
+                        <?php endif; ?>
                     </td>
                 </tr>
             <?php endif; ?>
