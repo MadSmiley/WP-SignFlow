@@ -24,6 +24,7 @@ class WP_SignFlow_Admin {
         add_action('admin_init', array($this, 'register_settings'));
         add_action('admin_post_signflow_save_template', array($this, 'save_template'));
         add_action('admin_post_signflow_delete_template', array($this, 'delete_template'));
+        add_action('admin_post_signflow_create_contract', array($this, 'create_contract'));
     }
 
     /**
@@ -59,6 +60,15 @@ class WP_SignFlow_Admin {
         );
 
         add_submenu_page(
+            'wp-signflow-contracts', // Hidden from menu
+            __('Create Contract', 'wp-signflow'),
+            __('Create Contract', 'wp-signflow'),
+            'manage_options',
+            'wp-signflow-create-contract',
+            array($this, 'render_create_contract_page')
+        );
+
+        add_submenu_page(
             'wp-signflow',
             __('Settings', 'wp-signflow'),
             __('Settings', 'wp-signflow'),
@@ -77,7 +87,7 @@ class WP_SignFlow_Admin {
         );
 
         add_submenu_page(
-            'wp-signflow-settings', // Hidden from menu
+            'wp-signflow-contracts', // Hidden from menu
             __('View Contract', 'wp-signflow'),
             __('View Contract', 'wp-signflow'),
             'manage_options',
@@ -251,6 +261,52 @@ class WP_SignFlow_Admin {
         WP_SignFlow_Template_Manager::delete_template($template_id);
 
         wp_redirect(admin_url('admin.php?page=wp-signflow&message=deleted'));
+        exit;
+    }
+
+    /**
+     * Render create contract page
+     */
+    public function render_create_contract_page() {
+        include WP_SIGNFLOW_PLUGIN_DIR . 'admin/views/create-contract.php';
+    }
+
+    /**
+     * Create contract
+     */
+    public function create_contract() {
+        if (!current_user_can('manage_options')) {
+            wp_die(__('Unauthorized', 'wp-signflow'));
+        }
+
+        check_admin_referer('signflow_create_contract', 'signflow_nonce');
+
+        // Get form data
+        $template_id = isset($_POST['template_id']) ? intval($_POST['template_id']) : 0;
+        $variables = isset($_POST['variables']) ? $_POST['variables'] : array();
+
+        // Validate
+        if (empty($template_id)) {
+            wp_redirect(admin_url('admin.php?page=wp-signflow-create-contract&error=' . urlencode(__('Please select a template.', 'wp-signflow'))));
+            exit;
+        }
+
+        // Sanitize variables
+        $sanitized_variables = array();
+        foreach ($variables as $key => $value) {
+            $sanitized_variables[sanitize_text_field($key)] = sanitize_text_field($value);
+        }
+
+        // Generate contract
+        $result = WP_SignFlow_Contract_Generator::generate_contract($template_id, $sanitized_variables);
+
+        if (is_wp_error($result)) {
+            wp_redirect(admin_url('admin.php?page=wp-signflow-create-contract&error=' . urlencode($result->get_error_message())));
+            exit;
+        }
+
+        // Redirect to contracts page with success message
+        wp_redirect(admin_url('admin.php?page=wp-signflow-contracts&success=1'));
         exit;
     }
 }

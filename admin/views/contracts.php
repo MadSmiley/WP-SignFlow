@@ -9,7 +9,17 @@ if (!defined('ABSPATH')) {
 ?>
 
 <div class="wrap">
-    <h1><?php _e('Contracts', 'wp-signflow'); ?></h1>
+    <h1 class="wp-heading-inline"><?php _e('Contracts', 'wp-signflow'); ?></h1>
+    <a href="<?php echo esc_url(admin_url('admin.php?page=wp-signflow-create-contract')); ?>" class="page-title-action">
+        <?php _e('Create Contract', 'wp-signflow'); ?>
+    </a>
+    <hr class="wp-header-end">
+
+    <?php if (isset($_GET['success'])): ?>
+        <div class="notice notice-success is-dismissible">
+            <p><?php _e('Contract created successfully!', 'wp-signflow'); ?></p>
+        </div>
+    <?php endif; ?>
 
     <table class="wp-list-table widefat fixed striped">
         <thead>
