@@ -21,9 +21,6 @@ class WP_SignFlow_PDF_Generator {
                 return $result;
             }
         }
-
-        // Fallback to printable HTML
-        return self::save_as_printable_html($contract_id, $html_content);
     }
 
     /**
@@ -105,93 +102,20 @@ class WP_SignFlow_PDF_Generator {
             return new WP_Error('pdf_generation_failed', $e->getMessage());
         }
     }
-
-    /**
-     * Save as printable HTML (fallback)
-     */
-    private static function save_as_printable_html($contract_id, $html_content) {
-        $html = '<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="UTF-8">
-    <title>Contract #' . $contract_id . '</title>
-    <style>
-        @page {
-            size: A4;
-            margin: 15mm;
-        }
-        body {
-            font-family: Arial, Helvetica, sans-serif;
-            font-size: 11pt;
-            line-height: 1.6;
-            color: #000;
-            margin: 0;
-            padding: 20px;
-            max-width: 800px;
-        }
-        h1 { font-size: 18pt; margin-bottom: 10px; color: #333; }
-        h2 { font-size: 14pt; margin-top: 15px; margin-bottom: 8px; color: #555; }
-        h3 { font-size: 12pt; margin-top: 12px; margin-bottom: 6px; color: #666; }
-        p { margin: 8px 0; }
-        strong, b { font-weight: bold; }
-        em, i { font-style: italic; }
-        ul { margin: 10px 0; padding-left: 20px; }
-        li { margin: 5px 0; }
-        table { width: 100%; border-collapse: collapse; margin: 15px 0; }
-        table th, table td { padding: 8px; border: 1px solid #ddd; text-align: left; }
-        table th { background-color: #f5f5f5; font-weight: bold; }
-        @media print {
-            body { margin: 0; padding: 15mm; }
-        }
-    </style>
-</head>
-<body>
-    ' . $html_content . '
-</body>
-</html>';
-
-        $filename = 'contract_' . $contract_id . '_' . time() . '.html';
-        $upload_dir = wp_upload_dir();
-        $signflow_dir = $upload_dir['basedir'] . '/wp-signflow';
-        $filepath = $signflow_dir . '/' . $filename;
-
-        if (file_put_contents($filepath, $html) !== false) {
-            // Calculate hash of original document
-            $original_hash = hash_file('sha256', $filepath);
-
-            // Update contract with file path and original hash
-            global $wpdb;
-            $table = WP_SignFlow_Database::get_table('contracts');
-            $wpdb->update(
-                $table,
-                array(
-                    'pdf_path' => $filename,
-                    'original_hash' => $original_hash
-                ),
-                array('id' => $contract_id),
-                array('%s', '%s'),
-                array('%d')
-            );
-
-
-            return $filename;
-        }
-
-        return new WP_Error('save_failed', 'Failed to save document');
-    }
+    
 
     /**
      * Add signature to existing PDF/HTML
      */
     public static function add_signature_to_pdf($contract_id, $signature_image_path) {
         $contract = WP_SignFlow_Contract_Generator::get_contract($contract_id);
-        if (!$contract || !$contract->pdf_path) {
+        if (!$contract || !$contract->original_pdf_path) {
             return new WP_Error('invalid_contract', 'Contract or document not found');
         }
 
         $upload_dir = wp_upload_dir();
         $signflow_dir = $upload_dir['basedir'] . '/wp-signflow';
-        $file_path = $signflow_dir . '/' . $contract->pdf_path;
+        $file_path = $signflow_dir . '/' . $contract->original_pdf_path;
 
         if (!file_exists($file_path)) {
             return new WP_Error('file_not_found', 'Document file not found');

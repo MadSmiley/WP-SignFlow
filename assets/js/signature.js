@@ -40,7 +40,12 @@
             minWidth: 1,
             maxWidth: 3,
             throttle: 0,
-            velocityFilterWeight: 0.7
+            velocityFilterWeight: 0.7,
+            onEnd: function() {
+                // Track signature completion timestamp
+                const timestamp = new Date().toISOString();
+                $('#signature-timestamp').val(timestamp);
+            }
         });
 
         // Clear button
@@ -63,23 +68,22 @@
         submitBtn.data('original-text', submitBtn.text());
 
         // Track consent checkbox timestamp
-        $('#consent').on('change', function() {
-            if ($(this).is(':checked')) {
-                const timestamp = new Date().toISOString();
-                $('#consent-timestamp').val(timestamp);
-            } else {
-                // Clear timestamp if unchecked
-                $('#consent-timestamp').val('');
-            }
-        });
+        const consentCheckbox = document.getElementById('consent');
+        const consentTimestampField = document.getElementById('consent-timestamp');
 
-        // Track signature completion timestamp
-        const canvas = document.getElementById('signature-pad');
-        if (canvas && signaturePad) {
-            signaturePad.addEventListener('endStroke', function() {
-                const timestamp = new Date().toISOString();
-                $('#signature-timestamp').val(timestamp);
+        if (consentCheckbox && consentTimestampField) {
+            consentCheckbox.addEventListener('change', function() {
+                if (this.checked) {
+                    const timestamp = new Date().toISOString();
+                    consentTimestampField.value = timestamp;
+                    console.log('Consent timestamp captured:', timestamp);
+                } else {
+                    // Clear timestamp if unchecked
+                    consentTimestampField.value = '';
+                }
             });
+        } else {
+            console.error('Consent checkbox or timestamp field not found');
         }
 
         form.on('submit', function(e) {
