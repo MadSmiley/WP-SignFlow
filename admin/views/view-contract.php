@@ -42,37 +42,46 @@ if (!$contract) {
                     <td><code style="font-size: 11px;"><?php echo esc_html($contract->original_hash); ?></code></td>
                 </tr>
             <?php endif; ?>
-            <?php if ($contract->pdf_hash): ?>
+            <?php if ($contract->signed_pdf_hash): ?>
                 <tr>
                     <th><?php _e('Signed Document Hash:', 'wp-signflow'); ?></th>
-                    <td><code style="font-size: 11px;"><?php echo esc_html($contract->pdf_hash); ?></code></td>
+                    <td><code style="font-size: 11px;"><?php echo esc_html($contract->signed_pdf_hash); ?></code></td>
                 </tr>
             <?php endif; ?>
-            <?php if ($contract->pdf_path): ?>
-                <tr>
-                    <th><?php _e('Documents:', 'wp-signflow'); ?></th>
-                    <td>
+            <tr>
+                <th><?php _e('Documents:', 'wp-signflow'); ?></th>
+                <td>
+                    <?php
+                    $upload_dir = wp_upload_dir();
+                    ?>
+                    <?php if (!empty($contract->original_pdf_path)): ?>
                         <?php
-                        $upload_dir = wp_upload_dir();
-                        $pdf_url = $upload_dir['baseurl'] . '/wp-signflow/' . $contract->pdf_path;
-
-                        // Determine if this is the original or signed version
-                        $is_signed = ($contract->status === 'signed');
+                        $original_pdf_url = $upload_dir['baseurl'] . '/wp-signflow/' . $contract->original_pdf_path;
                         ?>
-                        <a href="<?php echo esc_url($pdf_url); ?>" target="_blank" class="button button-primary">
-                            📄 <?php echo $is_signed ? __('Download Signed Contract', 'wp-signflow') : __('Download Original Contract', 'wp-signflow'); ?>
+                        <a href="<?php echo esc_url($original_pdf_url); ?>" target="_blank" class="button">
+                            📄 <?php _e('Download Original Contract', 'wp-signflow'); ?>
                         </a>
-                        <?php if (isset($contract->certificate_path) && $contract->certificate_path): ?>
-                            <?php
-                            $cert_url = $upload_dir['baseurl'] . '/wp-signflow/' . $contract->certificate_path;
-                            ?>
-                            <a href="<?php echo esc_url($cert_url); ?>" target="_blank" class="button button-secondary" style="margin-left: 10px;">
-                                🔒 <?php _e('Download Certificate', 'wp-signflow'); ?>
-                            </a>
-                        <?php endif; ?>
-                    </td>
-                </tr>
-            <?php endif; ?>
+                    <?php endif; ?>
+
+                    <?php if (!empty($contract->signed_pdf_path)): ?>
+                        <?php
+                        $signed_pdf_url = $upload_dir['baseurl'] . '/wp-signflow/' . $contract->signed_pdf_path;
+                        ?>
+                        <a href="<?php echo esc_url($signed_pdf_url); ?>" target="_blank" class="button button-primary" style="margin-left: 10px;">
+                            ✍️ <?php _e('Download Signed Contract', 'wp-signflow'); ?>
+                        </a>
+                    <?php endif; ?>
+
+                    <?php if (isset($contract->certificate_path) && $contract->certificate_path): ?>
+                        <?php
+                        $cert_url = $upload_dir['baseurl'] . '/wp-signflow/' . $contract->certificate_path;
+                        ?>
+                        <a href="<?php echo esc_url($cert_url); ?>" target="_blank" class="button button-secondary" style="margin-left: 10px;">
+                            🔒 <?php _e('Download Certificate', 'wp-signflow'); ?>
+                        </a>
+                    <?php endif; ?>
+                </td>
+            </tr>
             <?php if ($contract->status === 'pending'): ?>
                 <tr>
                     <th><?php _e('Signature URL:', 'wp-signflow'); ?></th>

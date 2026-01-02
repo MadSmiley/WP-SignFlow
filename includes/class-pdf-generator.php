@@ -84,13 +84,13 @@ class WP_SignFlow_PDF_Generator {
             // Calculate hash of original document
             $original_hash = hash_file('sha256', $filepath);
 
-            // Update contract with PDF path and original hash
+            // Update contract with original PDF only (signed fields remain empty)
             global $wpdb;
             $table = WP_SignFlow_Database::get_table('contracts');
             $wpdb->update(
                 $table,
                 array(
-                    'pdf_path' => $filename,
+                    'original_pdf_path' => $filename,
                     'original_hash' => $original_hash
                 ),
                 array('id' => $contract_id),
@@ -251,14 +251,14 @@ class WP_SignFlow_PDF_Generator {
             // Calculate hash
             $hash = hash_file('sha256', $filepath);
 
-            // Update contract
+            // Update contract with signed PDF
             global $wpdb;
             $table = WP_SignFlow_Database::get_table('contracts');
             $wpdb->update(
                 $table,
                 array(
-                    'pdf_path' => $filename,
-                    'pdf_hash' => $hash,
+                    'signed_pdf_path' => $filename,
+                    'signed_pdf_hash' => $hash,
                     'status' => 'signed',
                     'signed_at' => $signed_date
                 ),
@@ -344,7 +344,9 @@ class WP_SignFlow_PDF_Generator {
             $pdf->Cell(50, 7, $pdf->decode_text($translations['email']) . ':', 0, 0);
             $pdf->Cell(0, 7, $signer_email, 0, 1);
             $pdf->Cell(50, 7, $pdf->decode_text($translations['date']) . ':', 0, 0);
-            $pdf->Cell(0, 7, date('d/m/Y \a\t H:i:s', strtotime($signed_date)), 0, 1);
+            $pdf->Cell(0, 7, gmdate('d/m/Y \a\t H:i:s', strtotime($signed_date)) . ' UTC', 0, 1);
+            $pdf->Cell(50, 7, $pdf->decode_text($translations['signature_mode']) . ':', 0, 0);
+            $pdf->MultiCell(0, 7, $pdf->decode_text($translations['signature_mode_value']));
             $pdf->Ln(10);
 
             // Document Hash
@@ -370,7 +372,7 @@ class WP_SignFlow_PDF_Generator {
             $pdf->SetFont('Arial', '', 10);
             $pdf->MultiCell(0, 6,
                 $pdf->decode_text(sprintf($translations['certification_text'],
-                    date('d/m/Y \a\t H:i:s', strtotime($signed_date))
+                    gmdate('d/m/Y \a\t H:i:s', strtotime($signed_date)) . ' UTC'
                 ))
             );
 
@@ -402,13 +404,16 @@ class WP_SignFlow_PDF_Generator {
                 'name' => 'Name',
                 'email' => 'Email',
                 'date' => 'Date',
+                'signature_mode' => 'Signature Mode',
+                'signature_mode_value' => 'Handwritten electronic signature on-site in the presence of an agent',
                 'doc_integrity' => 'Document Integrity',
                 'hash_algo' => 'Hash Algorithm',
                 'original_hash' => 'Original Document Hash',
                 'signed_hash' => 'Signed Document Hash',
                 'certification' => 'Certification',
-                'certification_text' => 'This certificate attests that the referenced contract was electronically signed on %s by the person identified above. The signer explicitly consented to this electronic signature after reviewing the contract in the presence of an agent. 
-                The document\'s integrity is guaranteed by the SHA-256 hashes listed above.'
+                'certification_text' => 'This certificate attests that the referenced contract was electronically signed on %s by the person identified above. The signer explicitly consented to this electronic signature after reviewing the contract in the presence of an agent.
+
+The document\'s integrity is guaranteed by the SHA-256 hashes listed above.'
             ),
             'fr' => array(
                 'title_meta' => 'Certificat',
@@ -418,13 +423,16 @@ class WP_SignFlow_PDF_Generator {
                 'name' => 'Nom',
                 'email' => 'Email',
                 'date' => 'Date',
+                'signature_mode' => 'Mode de Signature',
+                'signature_mode_value' => 'Signature electronique manuscrite sur place en presence d\'un agent',
                 'doc_integrity' => 'Integrite du Document',
                 'hash_algo' => 'Algorithme de Hachage',
                 'original_hash' => 'Hash du Document Original',
                 'signed_hash' => 'Hash du Document Signe',
                 'certification' => 'Certification',
-                'certification_text' => "Ce certificat atteste que le contrat reference a été signé électroniquement le %s par la personne identifiée ci-dessus. Le signataire a expressement consenti à cette signature electronique après avoir éxaminé le contrat en présence d\'un agent.
-                L\'intégrité du document est garantie par les hash SHA-256 indiqués ci-dessus."
+                'certification_text' => "Ce certificat atteste que le contrat reference a ete signe electroniquement le %s par la personne identifiee ci-dessus. Le signataire a expressement consenti a cette signature electronique apres avoir examine le contrat en presence d\'un agent.
+
+L\'integrite du document est garantie par les hash SHA-256 indiques ci-dessus."
             )
         );
 

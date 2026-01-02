@@ -179,7 +179,9 @@ class WP_SignFlow_Storage_Manager {
                 ]);
 
                 $bucket = $storage->bucket($bucket_name);
-                $object_name = 'contracts/' . $contract->pdf_path;
+                // Use signed PDF if exists, otherwise original
+                $pdf_filename = !empty($contract->signed_pdf_path) ? $contract->signed_pdf_path : $contract->original_pdf_path;
+                $object_name = 'contracts/' . $pdf_filename;
                 $object = $bucket->object($object_name);
 
                 return $object->signedUrl(new \DateTime($expiration));
@@ -191,7 +193,9 @@ class WP_SignFlow_Storage_Manager {
 
         // Local storage: return direct URL (protected by .htaccess)
         $upload_dir = wp_upload_dir();
-        return $upload_dir['baseurl'] . '/wp-signflow/' . $contract->pdf_path;
+        // Use signed PDF if exists, otherwise original
+        $pdf_filename = !empty($contract->signed_pdf_path) ? $contract->signed_pdf_path : $contract->original_pdf_path;
+        return $upload_dir['baseurl'] . '/wp-signflow/' . $pdf_filename;
     }
 
     /**
@@ -205,15 +209,33 @@ class WP_SignFlow_Storage_Manager {
 
         $storage_type = get_option('signflow_storage_type', 'local');
 
+        $success = true;
+
         if ($storage_type === 'google_cloud') {
-            return self::delete_from_google_cloud('contracts/' . $contract->pdf_path);
+            // Delete both original and signed from Google Cloud
+            if ($contract->original_pdf_path) {
+                $success = $success && self::delete_from_google_cloud('contracts/' . $contract->original_pdf_path);
+            }
+            if ($contract->signed_pdf_path) {
+                $success = $success && self::delete_from_google_cloud('contracts/' . $contract->signed_pdf_path);
+            }
+            return $success;
         }
 
         // Delete from local storage
-        $pdf_path = WP_SignFlow_PDF_Generator::get_pdf_path($contract->pdf_path);
-        if (file_exists($pdf_path)) {
-            return unlink($pdf_path);
+        if ($contract->original_pdf_path) {
+            $pdf_path = WP_SignFlow_PDF_Generator::get_pdf_path($contract->original_pdf_path);
+            if (file_exists($pdf_path)) {
+                $success = $success && unlink($pdf_path);
+            }
         }
+        if ($contract->signed_pdf_path) {
+            $pdf_path = WP_SignFlow_PDF_Generator::get_pdf_path($contract->signed_pdf_path);
+            if (file_exists($pdf_path)) {
+                $success = $success && unlink($pdf_path);
+            }
+        }
+        return $success;
 
         return false;
     }

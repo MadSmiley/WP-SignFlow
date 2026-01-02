@@ -146,7 +146,8 @@ class WP_SignFlow_Public_API {
             'contract_id' => $contract->id,
             'status' => $contract->status,
             'signed_at' => $contract->signed_at,
-            'pdf_hash' => $contract->pdf_hash
+            'original_hash' => $contract->original_hash,
+            'signed_pdf_hash' => $contract->signed_pdf_hash
         ));
     }
 
@@ -166,7 +167,8 @@ class WP_SignFlow_Public_API {
             'contract_id' => $contract_id,
             'is_valid' => $is_valid,
             'status' => $contract->status,
-            'pdf_hash' => $contract->pdf_hash,
+            'original_hash' => $contract->original_hash,
+            'signed_pdf_hash' => $contract->signed_pdf_hash,
             'signed_at' => $contract->signed_at
         ));
     }

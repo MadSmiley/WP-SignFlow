@@ -314,12 +314,12 @@ class WP_SignFlow_Public_Signature {
                     <h2><?php echo esc_html($translations['contract_preview']); ?></h2>
                     <div class="contract-preview">
                         <?php
-                        if ($contract->pdf_path) {
+                        if ($contract->original_pdf_path) {
                             $upload_dir = wp_upload_dir();
-                            $pdf_url = $upload_dir['baseurl'] . '/wp-signflow/' . $contract->pdf_path;
+                            $pdf_url = $upload_dir['baseurl'] . '/wp-signflow/' . $contract->original_pdf_path;
 
                             // Check if it's a PDF or HTML
-                            if (substr($contract->pdf_path, -4) === '.pdf') {
+                            if (substr($contract->original_pdf_path, -4) === '.pdf') {
                                 // Display PDF in iframe
                                 echo '<iframe src="' . esc_url($pdf_url) . '" style="width: 100%; height: 500px; border: none;"></iframe>';
                             } else {

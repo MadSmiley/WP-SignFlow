@@ -113,7 +113,7 @@ class WP_SignFlow_Signature_Handler {
         $wpdb->update(
             WP_SignFlow_Database::get_table('contracts'),
             array(
-                'pdf_hash' => $signed_hash,
+                'signed_pdf_hash' => $signed_hash,
                 'certificate_path' => $certificate_path,
                 'status' => 'signed',
                 'signed_at' => $signed_date,
@@ -210,17 +210,17 @@ class WP_SignFlow_Signature_Handler {
      */
     public static function verify_signature($contract_id) {
         $contract = WP_SignFlow_Contract_Generator::get_contract($contract_id);
-        if (!$contract || !$contract->pdf_path || !$contract->pdf_hash) {
+        if (!$contract || !$contract->signed_pdf_path || !$contract->signed_pdf_hash) {
             return false;
         }
 
-        $pdf_path = WP_SignFlow_PDF_Generator::get_pdf_path($contract->pdf_path);
+        $pdf_path = WP_SignFlow_PDF_Generator::get_pdf_path($contract->signed_pdf_path);
         if (!file_exists($pdf_path)) {
             return false;
         }
 
         $current_hash = WP_SignFlow_PDF_Generator::calculate_hash($pdf_path);
-        return $current_hash === $contract->pdf_hash;
+        return $current_hash === $contract->signed_pdf_hash;
     }
 
     /**
