@@ -68,13 +68,11 @@ class WP_SignFlow_Database {
             KEY expires_at (expires_at)
         ) $charset_collate;";
 
-        // Signatures table
+        // Signatures table - only metadata, no signature data stored
         $table_signatures = $wpdb->prefix . 'signflow_signatures';
         $sql_signatures = "CREATE TABLE $table_signatures (
             id bigint(20) NOT NULL AUTO_INCREMENT,
             contract_id bigint(20) NOT NULL,
-            signature_data longtext NOT NULL,
-            signature_image varchar(500),
             signer_name varchar(255),
             signer_email varchar(255),
             consent_given tinyint(1) DEFAULT 0,

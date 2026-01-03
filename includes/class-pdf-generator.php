@@ -106,8 +106,9 @@ class WP_SignFlow_PDF_Generator {
 
     /**
      * Add signature to existing PDF/HTML
+     * @param string $signature_data Base64 encoded image data
      */
-    public static function add_signature_to_pdf($contract_id, $signature_image_path) {
+    public static function add_signature_to_pdf($contract_id, $signature_data) {
         $contract = WP_SignFlow_Contract_Generator::get_contract($contract_id);
         if (!$contract || !$contract->original_pdf_path) {
             return new WP_Error('invalid_contract', 'Contract or document not found');
@@ -126,13 +127,14 @@ class WP_SignFlow_PDF_Generator {
         $signer_name = $signature ? $signature->signer_name : '';
         $signed_date = current_time('mysql');
 
-        return self::add_signature_to_fpdf($contract, $signature_image_path, $signer_name, $signed_date);
+        return self::add_signature_to_fpdf($contract, $signature_data, $signer_name, $signed_date);
     }
 
     /**
      * Add signature to PDF using FPDF
+     * @param string $signature_data Base64 encoded image data or file path
      */
-    private static function add_signature_to_fpdf($contract, $signature_image_path, $signer_name, $signed_date) {
+    private static function add_signature_to_fpdf($contract, $signature_data, $signer_name, $signed_date) {
         try {
             // Ensure FPDF is loaded
             if (!self::is_fpdf_available()) {
@@ -161,8 +163,8 @@ class WP_SignFlow_PDF_Generator {
             // Content only (no header)
             $pdf->add_html_content($html_content);
 
-            // Signature section
-            $pdf->add_signature_section($signature_image_path, $signer_name, $signed_date);
+            // Signature section - pass base64 data directly
+            $pdf->add_signature_section($signature_data, $signer_name, $signed_date);
 
             // Save
             $filename = 'contract_' . $contract_id . '_signed_' . time() . '.pdf';

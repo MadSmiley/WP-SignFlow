@@ -33,17 +33,11 @@ class WP_SignFlow_Signature_Handler {
             return new WP_Error('consent_required', 'Consent is required');
         }
 
-        // Save signature image
-        $signature_image = self::save_signature_image($contract_id, $signature_data);
-        if (is_wp_error($signature_image)) {
-            return $signature_image;
-        }
-
         // Get IP and User Agent
         $ip_address = self::get_client_ip();
         $user_agent = isset($_SERVER['HTTP_USER_AGENT']) ? $_SERVER['HTTP_USER_AGENT'] : '';
 
-        // Save signature to database
+        // Save signature metadata only (no signature data or image stored)
         global $wpdb;
         $table = WP_SignFlow_Database::get_table('signatures');
 
@@ -51,15 +45,13 @@ class WP_SignFlow_Signature_Handler {
             $table,
             array(
                 'contract_id' => $contract_id,
-                'signature_data' => $signature_data,
-                'signature_image' => basename($signature_image),
                 'signer_name' => sanitize_text_field($signer_info['name'] ?? ''),
                 'signer_email' => sanitize_email($signer_info['email'] ?? ''),
                 'consent_given' => 1,
                 'ip_address' => $ip_address,
                 'user_agent' => substr($user_agent, 0, 500)
             ),
-            array('%d', '%s', '%s', '%s', '%s', '%d', '%s', '%s')
+            array('%d', '%s', '%s', '%d', '%s', '%s')
         );
 
         if (!$result) {
@@ -83,9 +75,16 @@ class WP_SignFlow_Signature_Handler {
         $contract = WP_SignFlow_Contract_Generator::get_contract($contract_id);
         $original_hash = $contract->original_hash;
 
-        // Add signature to PDF
-        $pdf_result = WP_SignFlow_PDF_Generator::add_signature_to_pdf($contract_id, $signature_image);
+        // Add signature to PDF - pass base64 data directly (no file on disk)
+        $pdf_result = WP_SignFlow_PDF_Generator::add_signature_to_pdf($contract_id, $signature_data);
         if (is_wp_error($pdf_result)) {
+            // Log signature processing error to audit trail
+            WP_SignFlow_Audit_Trail::log_event($contract_id, 'signature_processing_error', array(
+                'error_code' => $pdf_result->get_error_code(),
+                'error_message' => $pdf_result->get_error_message(),
+                'signer_name' => $signer_info['name'] ?? '',
+                'signer_email' => $signer_info['email'] ?? ''
+            ));
             return $pdf_result;
         }
 
@@ -122,11 +121,6 @@ class WP_SignFlow_Signature_Handler {
             array('%d')
         );
 
-        // Delete signature image (no longer needed)
-        if (file_exists($signature_image)) {
-            @unlink($signature_image);
-        }
-
         // Log completion
         WP_SignFlow_Audit_Trail::log_event($contract_id, 'contract_signed', array(
             'original_hash' => $original_hash,
@@ -145,38 +139,6 @@ class WP_SignFlow_Signature_Handler {
             'signed_hash' => $signed_hash,
             'signed_at' => current_time('mysql')
         );
-    }
-
-    /**
-     * Save signature image from base64 data
-     */
-    private static function save_signature_image($contract_id, $signature_data) {
-        // Validate base64 image data
-        if (!preg_match('/^data:image\/(png|jpg|jpeg);base64,/', $signature_data, $matches)) {
-            return new WP_Error('invalid_image', 'Invalid signature image format');
-        }
-
-        $image_type = $matches[1];
-        $image_data = preg_replace('/^data:image\/(png|jpg|jpeg);base64,/', '', $signature_data);
-        $image_data = base64_decode($image_data);
-
-        if ($image_data === false) {
-            return new WP_Error('invalid_image', 'Failed to decode signature image');
-        }
-
-        // Generate filename
-        $filename = 'signature_' . $contract_id . '_' . time() . '.' . $image_type;
-        $upload_dir = wp_upload_dir();
-        $signflow_dir = $upload_dir['basedir'] . '/wp-signflow';
-        $filepath = $signflow_dir . '/' . $filename;
-
-        // Save file
-        $result = file_put_contents($filepath, $image_data);
-        if ($result === false) {
-            return new WP_Error('save_failed', 'Failed to save signature image');
-        }
-
-        return $filepath;
     }
 
     /**

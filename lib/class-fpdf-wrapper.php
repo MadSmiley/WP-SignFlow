@@ -159,8 +159,9 @@ class WP_SignFlow_FPDF_Wrapper extends FPDF {
 
     /**
      * Add signature image
+     * @param string $signature_data Base64 encoded image data or file path
      */
-    public function add_signature_section($signature_image_path, $signer_name, $signed_date) {
+    public function add_signature_section($signature_data, $signer_name, $signed_date) {
         $this->Ln(10);
 
         // Add separator line
@@ -179,42 +180,45 @@ class WP_SignFlow_FPDF_Wrapper extends FPDF {
         $this->Cell(0, 6, 'Date de signature : ' . $signed_date, 0, 1);
         $this->Ln(5);
 
-        // Signature image
-        if (file_exists($signature_image_path)) {
-            $this->Cell(0, 6, 'Signature :', 0, 1);
+        // Signature image - only accept base64 data
+        if (!preg_match('/^data:image\/(png|jpg|jpeg);base64,/', $signature_data, $matches)) {
+            throw new Exception('Invalid signature data format - must be base64 encoded image');
+        }
+
+        $image_type = $matches[1] === 'jpg' ? 'jpeg' : $matches[1];
+        $image_data = preg_replace('/^data:image\/(png|jpg|jpeg);base64,/', '', $signature_data);
+        $image_data = base64_decode($image_data);
+
+        if ($image_data === false || strlen($image_data) === 0) {
+            throw new Exception('Failed to decode signature image data');
+        }
+
+        // Create temporary file with proper extension in system temp directory
+        $temp_file = sys_get_temp_dir() . '/wpsfsg_' . uniqid() . '.' . $image_type;
+        $write_result = file_put_contents($temp_file, $image_data);
+
+        if ($write_result === false) {
+            throw new Exception('Failed to write signature image to temporary file');
+        }
+
+        try {
+            $this->Cell(0, 6, 'Signature : ', 0, 1);
             $this->Ln(2);
 
             // Add image (max width 80mm)
-            try {
-                $this->Image($signature_image_path, 10, $this->GetY(), 80);
-                $this->Ln(35); // Space for signature
-            } catch (Exception $e) {
-                $this->Cell(0, 6, '[Signature capturee electroniquement]', 0, 1);
+            $this->Image($temp_file, 10, $this->GetY(), 80, 0, strtoupper($image_type));
+            $this->Ln(35); // Space for signature
+        } catch (Exception $e) {
+            // Clean up temp file before re-throwing
+            if (file_exists($temp_file)) {
+                @unlink($temp_file);
             }
+            throw new Exception('Failed to add signature image to PDF: ' . $e->getMessage());
         }
 
-        $this->Ln(5);
-
-        // Certification box
-        $this->SetFillColor(245, 245, 245);
-        $this->SetDrawColor(34, 113, 177);
-        $this->SetLineWidth(1);
-
-        $y_start = $this->GetY();
-        $this->Rect(10, $y_start, 190, 25, 'D');
-        $this->SetXY(15, $y_start + 3);
-
-        $this->SetFont('Arial', 'B', 10);
-        $this->Cell(0, 5, 'Certification de signature electronique', 0, 1);
-        $this->SetX(15);
-
-        $this->SetFont('Arial', '', 9);
-        $this->MultiCell(180, 4,
-            "Document signe electroniquement le " . date('d/m/Y à H:i:s', strtotime($signed_date)) . ".\n" .
-            "La signature a ete capturee de maniere securisee et horodatee.\n" .
-            "Un hash SHA-256 a ete calcule pour garantir l'integrite du document."
-        );
-
-        $this->SetLineWidth(0.2);
+        // Delete temporary file immediately after successful use
+        if (file_exists($temp_file)) {
+            @unlink($temp_file);
+        }
     }
 }
