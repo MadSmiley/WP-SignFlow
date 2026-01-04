@@ -79,8 +79,8 @@ class WP_SignFlow_Public_Signature {
 
         if (!empty($_GET['lang']) && in_array($_GET['lang'], $available_languages)) {
             $language = sanitize_text_field($_GET['lang']);
-        } elseif (!empty($contract->template_id)) {
-            $template = WP_SignFlow_Template_Manager::get_template($contract->template_id);
+        } elseif (!empty($contract->template_slug)) {
+            $template = WP_SignFlow_Template_Manager::get_template($contract->template_slug);
             if ($template && !empty($template->language)) {
                 $language = $template->language;
             }
@@ -469,8 +469,8 @@ class WP_SignFlow_Public_Signature {
         } elseif (!empty($_GET['token'])) {
             $token = sanitize_text_field($_GET['token']);
             $contract = WP_SignFlow_Contract_Generator::get_contract_by_token($token);
-            if ($contract && !empty($contract->template_id)) {
-                $template = WP_SignFlow_Template_Manager::get_template($contract->template_id);
+            if ($contract && !empty($contract->template_slug)) {
+                $template = WP_SignFlow_Template_Manager::get_template($contract->template_slug);
                 if ($template && !empty($template->language)) {
                     $language = $template->language;
                 }
