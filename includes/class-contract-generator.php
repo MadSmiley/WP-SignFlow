@@ -11,10 +11,11 @@ class WP_SignFlow_Contract_Generator {
 
     /**
      * Generate contract from template
+     * @param string $template_slug Template slug
      */
-    public static function generate_contract($template_id, $variables, $metadata = array()) {
+    public static function generate_contract($template_slug, $variables, $metadata = array()) {
         // Get template
-        $template = WP_SignFlow_Template_Manager::get_template($template_id);
+        $template = WP_SignFlow_Template_Manager::get_template($template_slug);
         if (!$template) {
             return new WP_Error('invalid_template', 'Template not found');
         }
@@ -36,7 +37,7 @@ class WP_SignFlow_Contract_Generator {
         $result = $wpdb->insert(
             $table,
             array(
-                'template_id' => $template_id,
+                'template_slug' => $template_slug,
                 'contract_token' => $token,
                 'contract_data' => maybe_serialize(array(
                     'variables' => $variables,
@@ -46,7 +47,7 @@ class WP_SignFlow_Contract_Generator {
                 'expires_at' => $expires_at,
                 'metadata' => maybe_serialize($metadata)
             ),
-            array('%d', '%s', '%s', '%s', '%s', '%s')
+            array('%s', '%s', '%s', '%s', '%s', '%s')
         );
 
         if (!$result) {
@@ -66,7 +67,7 @@ class WP_SignFlow_Contract_Generator {
 
         // Log audit event with original hash
         WP_SignFlow_Audit_Trail::log_event($contract_id, 'contract_generated', array(
-            'template_id' => $template_id,
+            'template_slug' => $template_slug,
             'variables' => array_keys($variables),
             'pdf_file' => basename($pdf_result),
             'original_hash' => $contract->original_hash

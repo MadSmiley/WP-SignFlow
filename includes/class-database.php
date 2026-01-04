@@ -28,24 +28,23 @@ class WP_SignFlow_Database {
         // Templates table
         $table_templates = $wpdb->prefix . 'signflow_templates';
         $sql_templates = "CREATE TABLE $table_templates (
-            id bigint(20) NOT NULL AUTO_INCREMENT,
-            name varchar(255) NOT NULL,
             slug varchar(255) NOT NULL,
+            name varchar(255) NOT NULL,
             content longtext NOT NULL,
-            variables text,
+            declared_variables text,
+            detected_variables text,
             language varchar(10) DEFAULT 'en',
             created_at datetime DEFAULT CURRENT_TIMESTAMP,
             updated_at datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
             created_by bigint(20),
-            PRIMARY KEY  (id),
-            UNIQUE KEY slug (slug)
+            PRIMARY KEY  (slug)
         ) $charset_collate;";
 
         // Contracts table
         $table_contracts = $wpdb->prefix . 'signflow_contracts';
         $sql_contracts = "CREATE TABLE $table_contracts (
             id bigint(20) NOT NULL AUTO_INCREMENT,
-            template_id bigint(20),
+            template_slug varchar(255),
             contract_token varchar(64) NOT NULL,
             contract_data longtext,
             original_pdf_path varchar(500),
@@ -63,7 +62,7 @@ class WP_SignFlow_Database {
             updated_at datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
             PRIMARY KEY  (id),
             UNIQUE KEY contract_token (contract_token),
-            KEY template_id (template_id),
+            KEY template_slug (template_slug),
             KEY status (status),
             KEY expires_at (expires_at)
         ) $charset_collate;";

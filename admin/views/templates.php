@@ -65,8 +65,8 @@ if (!defined('ABSPATH')) {
                         </td>
                         <td><code><?php echo esc_html($template->slug); ?></code></td>
                         <td>
-                            <?php if (!empty($template->variables)): ?>
-                                <?php foreach ($template->variables as $var): ?>
+                            <?php if (!empty($template->detected_variables)): ?>
+                                <?php foreach ($template->detected_variables as $var): ?>
                                     <code>{{<?php echo esc_html($var); ?>}}</code>
                                 <?php endforeach; ?>
                             <?php else: ?>
@@ -75,8 +75,8 @@ if (!defined('ABSPATH')) {
                         </td>
                         <td><?php echo esc_html($template->created_at); ?></td>
                         <td>
-                            <a href="<?php echo admin_url('admin.php?page=wp-signflow-edit-template&id=' . $template->id); ?>"><?php _e('Edit', 'wp-signflow'); ?></a> |
-                            <a href="<?php echo wp_nonce_url(admin_url('admin-post.php?action=signflow_delete_template&id=' . $template->id), 'signflow_delete_template_' . $template->id); ?>" onclick="return confirm('<?php echo esc_js(__('Are you sure?', 'wp-signflow')); ?>');" style="color: #b32d2e;"><?php _e('Delete', 'wp-signflow'); ?></a>
+                            <a href="<?php echo admin_url('admin.php?page=wp-signflow-edit-template&slug=' . urlencode($template->slug)); ?>"><?php _e('Edit', 'wp-signflow'); ?></a> |
+                            <a href="<?php echo wp_nonce_url(admin_url('admin-post.php?action=signflow_delete_template&slug=' . urlencode($template->slug)), 'signflow_delete_template_' . $template->slug); ?>" onclick="return confirm('<?php echo esc_js(__('Are you sure?', 'wp-signflow')); ?>');" style="color: #b32d2e;"><?php _e('Delete', 'wp-signflow'); ?></a>
                         </td>
                     </tr>
                 <?php endforeach; ?>

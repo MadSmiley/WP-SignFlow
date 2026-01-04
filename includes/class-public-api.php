@@ -81,28 +81,23 @@ class WP_SignFlow_Public_API {
         $params = $request->get_json_params();
 
         // Validate required parameters
-        if (empty($params['template_id']) && empty($params['template_slug'])) {
-            return new WP_Error('missing_parameter', 'template_id or template_slug is required', array('status' => 400));
+        if (empty($params['template_slug'])) {
+            return new WP_Error('missing_parameter', 'template_slug is required', array('status' => 400));
         }
 
         if (empty($params['variables']) || !is_array($params['variables'])) {
             return new WP_Error('missing_parameter', 'variables array is required', array('status' => 400));
         }
 
-        // Get template
-        if (!empty($params['template_id'])) {
-            $template_id = intval($params['template_id']);
-        } else {
-            $template = WP_SignFlow_Template_Manager::get_template_by_slug($params['template_slug']);
-            if (!$template) {
-                return new WP_Error('template_not_found', 'Template not found', array('status' => 404));
-            }
-            $template_id = $template->id;
+        // Verify template exists
+        $template = WP_SignFlow_Template_Manager::get_template($params['template_slug']);
+        if (!$template) {
+            return new WP_Error('template_not_found', 'Template not found', array('status' => 404));
         }
 
         // Generate contract
         $metadata = $params['metadata'] ?? array();
-        $result = WP_SignFlow_Contract_Generator::generate_contract($template_id, $params['variables'], $metadata);
+        $result = WP_SignFlow_Contract_Generator::generate_contract($params['template_slug'], $params['variables'], $metadata);
 
         if (is_wp_error($result)) {
             return $result;
@@ -194,24 +189,19 @@ class WP_SignFlow_Public_API {
 /**
  * Generate a contract (for use by other plugins)
  *
- * @param int|string $template Template ID or slug
+ * @param string $template_slug Template slug
  * @param array $variables Variables to replace in template
  * @param array $metadata Optional metadata
  * @return array|WP_Error Contract data or error
  */
-function signflow_generate_contract($template, $variables, $metadata = array()) {
-    // Get template ID
-    if (is_numeric($template)) {
-        $template_id = intval($template);
-    } else {
-        $template_obj = WP_SignFlow_Template_Manager::get_template_by_slug($template);
-        if (!$template_obj) {
-            return new WP_Error('template_not_found', 'Template not found');
-        }
-        $template_id = $template_obj->id;
+function signflow_generate_contract($template_slug, $variables, $metadata = array()) {
+    // Verify template exists
+    $template = WP_SignFlow_Template_Manager::get_template($template_slug);
+    if (!$template) {
+        return new WP_Error('template_not_found', 'Template not found');
     }
 
-    return WP_SignFlow_Contract_Generator::generate_contract($template_id, $variables, $metadata);
+    return WP_SignFlow_Contract_Generator::generate_contract($template_slug, $variables, $metadata);
 }
 
 /**

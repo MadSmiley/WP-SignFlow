@@ -10,29 +10,77 @@ if (!defined('ABSPATH')) {
 class WP_SignFlow_Template_Manager {
 
     /**
-     * Create a new template
+     * Register a template (for use by other plugins)
+     *
+     * @param string $slug Unique slug for the template (defined by the registering plugin)
+     * @param array $args Template arguments
+     *   - name (required): Template display name
+     *   - content (required): Template HTML content with {{variables}}
+     *   - variables (optional): Array of declared available variable names
+     *   - language (optional): Template language (default: 'en')
+     * @return string|false Template slug on success, false on failure
      */
-    public static function create_template($name, $content, $variables = array(), $language = 'en') {
+    public static function register_template($slug, $args) {
+        $defaults = array(
+            'name' => '',
+            'content' => '',
+            'variables' => array(),
+            'language' => 'en'
+        );
+
+        $args = wp_parse_args($args, $defaults);
+
+        // Validate required fields
+        if (empty($slug) || empty($args['name']) || empty($args['content'])) {
+            return false;
+        }
+
+        // Check if template already exists
+        $existing = self::get_template($slug);
+        if ($existing) {
+            // Update existing template
+            return self::update_template($slug, $args);
+        }
+
+        // Create new template
+        return self::create_template($args['name'], $args['content'], $args['variables'], $args['language'], $slug);
+    }
+
+    /**
+     * Create a new template
+     * @param string $name Template name
+     * @param string $content Template HTML content
+     * @param array $declared_variables Variables declared by the plugin (available for filling)
+     * @param string $language Template language
+     * @param string|null $custom_slug Custom slug (if null, generated from name)
+     * @return string|false Template slug on success, false on failure
+     */
+    public static function create_template($name, $content, $declared_variables = array(), $language = 'en', $custom_slug = null) {
         global $wpdb;
         $table = WP_SignFlow_Database::get_table('templates');
 
-        $slug = sanitize_title($name);
+        // Use custom slug if provided, otherwise generate from name
+        $slug = $custom_slug ? sanitize_key($custom_slug) : sanitize_title($name);
+
+        // Always detect variables used in HTML
+        $detected_variables = self::extract_variables($content);
 
         $result = $wpdb->insert(
             $table,
             array(
-                'name' => sanitize_text_field($name),
                 'slug' => $slug,
+                'name' => sanitize_text_field($name),
                 'content' => wp_kses_post($content),
-                'variables' => maybe_serialize($variables),
+                'declared_variables' => maybe_serialize($declared_variables),
+                'detected_variables' => maybe_serialize($detected_variables),
                 'language' => sanitize_text_field($language),
                 'created_by' => get_current_user_id()
             ),
-            array('%s', '%s', '%s', '%s', '%s', '%d')
+            array('%s', '%s', '%s', '%s', '%s', '%s', '%d')
         );
 
         if ($result) {
-            return $wpdb->insert_id;
+            return $slug;
         }
 
         return false;
@@ -40,8 +88,9 @@ class WP_SignFlow_Template_Manager {
 
     /**
      * Update template
+     * @param string $slug Template slug
      */
-    public static function update_template($id, $data) {
+    public static function update_template($slug, $data) {
         global $wpdb;
         $table = WP_SignFlow_Database::get_table('templates');
 
@@ -50,18 +99,19 @@ class WP_SignFlow_Template_Manager {
 
         if (isset($data['name'])) {
             $update_data['name'] = sanitize_text_field($data['name']);
-            $update_data['slug'] = sanitize_title($data['name']);
-            $format[] = '%s';
             $format[] = '%s';
         }
 
         if (isset($data['content'])) {
             $update_data['content'] = wp_kses_post($data['content']);
+            // Re-detect variables when content changes
+            $update_data['detected_variables'] = maybe_serialize(self::extract_variables($data['content']));
+            $format[] = '%s';
             $format[] = '%s';
         }
 
         if (isset($data['variables'])) {
-            $update_data['variables'] = maybe_serialize($data['variables']);
+            $update_data['declared_variables'] = maybe_serialize($data['variables']);
             $format[] = '%s';
         }
 
@@ -77,35 +127,17 @@ class WP_SignFlow_Template_Manager {
         return $wpdb->update(
             $table,
             $update_data,
-            array('id' => $id),
+            array('slug' => $slug),
             $format,
-            array('%d')
+            array('%s')
         );
     }
 
     /**
-     * Get template by ID
-     */
-    public static function get_template($id) {
-        global $wpdb;
-        $table = WP_SignFlow_Database::get_table('templates');
-
-        $template = $wpdb->get_row($wpdb->prepare(
-            "SELECT * FROM $table WHERE id = %d",
-            $id
-        ));
-
-        if ($template) {
-            $template->variables = maybe_unserialize($template->variables);
-        }
-
-        return $template;
-    }
-
-    /**
      * Get template by slug
+     * @param string $slug Template slug
      */
-    public static function get_template_by_slug($slug) {
+    public static function get_template($slug) {
         global $wpdb;
         $table = WP_SignFlow_Database::get_table('templates');
 
@@ -115,10 +147,18 @@ class WP_SignFlow_Template_Manager {
         ));
 
         if ($template) {
-            $template->variables = maybe_unserialize($template->variables);
+            $template->declared_variables = maybe_unserialize($template->declared_variables);
+            $template->detected_variables = maybe_unserialize($template->detected_variables);
         }
 
         return $template;
+    }
+
+    /**
+     * Get template by slug (alias for backward compatibility)
+     */
+    public static function get_template_by_slug($slug) {
+        return self::get_template($slug);
     }
 
     /**
@@ -141,20 +181,21 @@ class WP_SignFlow_Template_Manager {
         $templates = $wpdb->get_results($query);
 
         foreach ($templates as $template) {
-            $template->variables = maybe_unserialize($template->variables);
+            $template->declared_variables = maybe_unserialize($template->declared_variables);
+            $template->detected_variables = maybe_unserialize($template->detected_variables);
         }
 
         return $templates;
     }
 
     /**
-     * Delete template
+     * Delete template by slug
      */
-    public static function delete_template($id) {
+    public static function delete_template($slug) {
         global $wpdb;
         $table = WP_SignFlow_Database::get_table('templates');
 
-        return $wpdb->delete($table, array('id' => $id), array('%d'));
+        return $wpdb->delete($table, array('slug' => $slug), array('%s'));
     }
 
     /**

@@ -18,7 +18,7 @@ $page_title = $is_new ? __('Add New Template', 'wp-signflow') : __('Edit Templat
         <input type="hidden" name="action" value="signflow_save_template">
         <?php wp_nonce_field('signflow_save_template'); ?>
         <?php if (!$is_new): ?>
-            <input type="hidden" name="template_id" value="<?php echo esc_attr($template->id); ?>">
+            <input type="hidden" name="template_slug" value="<?php echo esc_attr($template->slug); ?>">
         <?php endif; ?>
 
         <table class="form-table">
@@ -79,11 +79,11 @@ $page_title = $is_new ? __('Add New Template', 'wp-signflow') : __('Edit Templat
             </tr>
         </table>
 
-        <?php if (!$is_new && !empty($template->variables)): ?>
+        <?php if (!$is_new && !empty($template->detected_variables)): ?>
             <h2><?php _e('Detected Variables', 'wp-signflow'); ?></h2>
-            <p><?php _e('The following variables were found in your template:', 'wp-signflow'); ?></p>
+            <p><?php _e('The following variables were automatically detected in your template:', 'wp-signflow'); ?></p>
             <ul>
-                <?php foreach ($template->variables as $var): ?>
+                <?php foreach ($template->detected_variables as $var): ?>
                     <li><code>{{<?php echo esc_html($var); ?>}}</code></li>
                 <?php endforeach; ?>
             </ul>

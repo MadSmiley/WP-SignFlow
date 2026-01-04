@@ -38,14 +38,15 @@ $templates = WP_SignFlow_Template_Manager::get_templates();
             <tbody>
                 <tr>
                     <th scope="row">
-                        <label for="template_id"><?php _e('Template', 'wp-signflow'); ?> *</label>
+                        <label for="template_slug"><?php _e('Template', 'wp-signflow'); ?> *</label>
                     </th>
                     <td>
-                        <select name="template_id" id="template_id" class="regular-text" required>
+                        <select name="template_slug" id="template_slug" class="regular-text" required>
                             <option value=""><?php _e('-- Select a template --', 'wp-signflow'); ?></option>
                             <?php foreach ($templates as $template): ?>
-                                <option value="<?php echo esc_attr($template->id); ?>"
-                                        data-variables="<?php echo esc_attr(maybe_serialize($template->variables)); ?>"
+                                <option value="<?php echo esc_attr($template->slug); ?>"
+                                        data-declared-variables="<?php echo esc_attr(maybe_serialize($template->declared_variables)); ?>"
+                                        data-detected-variables="<?php echo esc_attr(maybe_serialize($template->detected_variables)); ?>"
                                         data-language="<?php echo esc_attr($template->language ?? 'en'); ?>">
                                     <?php echo esc_html($template->name); ?>
                                 </option>
@@ -110,9 +111,10 @@ $templates = WP_SignFlow_Template_Manager::get_templates();
 
 <script>
 jQuery(document).ready(function($) {
-    $('#template_id').on('change', function() {
+    $('#template_slug').on('change', function() {
         var selectedOption = $(this).find('option:selected');
-        var variables = selectedOption.data('variables');
+        // Use detected variables (all variables used in HTML)
+        var variables = selectedOption.data('detected-variables');
 
         if (variables) {
             try {

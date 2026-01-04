@@ -185,11 +185,11 @@ class WP_SignFlow_Admin {
      * Render edit template page
      */
     public function render_edit_template_page() {
-        $template_id = isset($_GET['id']) ? intval($_GET['id']) : 0;
+        $template_slug = isset($_GET['slug']) ? sanitize_key($_GET['slug']) : '';
         $template = null;
 
-        if ($template_id) {
-            $template = WP_SignFlow_Template_Manager::get_template($template_id);
+        if ($template_slug) {
+            $template = WP_SignFlow_Template_Manager::get_template($template_slug);
         }
 
         include WP_SIGNFLOW_PLUGIN_DIR . 'admin/views/edit-template.php';
@@ -224,7 +224,7 @@ class WP_SignFlow_Admin {
         $contracts = $wpdb->get_results(
             "SELECT c.*, t.name as template_name
             FROM $table c
-            LEFT JOIN " . WP_SignFlow_Database::get_table('templates') . " t ON c.template_id = t.id
+            LEFT JOIN " . WP_SignFlow_Database::get_table('templates') . " t ON c.template_slug = t.slug
             ORDER BY c.created_at DESC
             LIMIT 100"
         );
@@ -261,25 +261,21 @@ class WP_SignFlow_Admin {
 
         check_admin_referer('signflow_save_template');
 
-        $template_id = isset($_POST['template_id']) ? intval($_POST['template_id']) : 0;
+        $template_slug = isset($_POST['template_slug']) ? sanitize_key($_POST['template_slug']) : '';
         $name = sanitize_text_field($_POST['template_name']);
         $content = wp_kses_post($_POST['template_content']);
         $language = isset($_POST['template_language']) ? sanitize_text_field($_POST['template_language']) : 'en';
 
-        // Extract variables from content
-        $variables = WP_SignFlow_Template_Manager::extract_variables($content);
-
-        if ($template_id) {
+        if ($template_slug) {
             // Update existing template
-            WP_SignFlow_Template_Manager::update_template($template_id, array(
+            WP_SignFlow_Template_Manager::update_template($template_slug, array(
                 'name' => $name,
                 'content' => $content,
-                'variables' => $variables,
                 'language' => $language
             ));
         } else {
-            // Create new template
-            WP_SignFlow_Template_Manager::create_template($name, $content, $variables, $language);
+            // Create new template (slug will be generated from name)
+            WP_SignFlow_Template_Manager::create_template($name, $content, array(), $language);
         }
 
         wp_redirect(admin_url('admin.php?page=wp-signflow&message=saved'));
@@ -294,10 +290,10 @@ class WP_SignFlow_Admin {
             wp_die('Unauthorized');
         }
 
-        check_admin_referer('signflow_delete_template_' . $_GET['id']);
+        check_admin_referer('signflow_delete_template_' . $_GET['slug']);
 
-        $template_id = intval($_GET['id']);
-        WP_SignFlow_Template_Manager::delete_template($template_id);
+        $template_slug = sanitize_key($_GET['slug']);
+        WP_SignFlow_Template_Manager::delete_template($template_slug);
 
         wp_redirect(admin_url('admin.php?page=wp-signflow&message=deleted'));
         exit;
@@ -321,14 +317,14 @@ class WP_SignFlow_Admin {
         check_admin_referer('signflow_create_contract', 'signflow_nonce');
 
         // Get form data
-        $template_id = isset($_POST['template_id']) ? intval($_POST['template_id']) : 0;
+        $template_slug = isset($_POST['template_slug']) ? sanitize_key($_POST['template_slug']) : '';
         $variables = isset($_POST['variables']) ? $_POST['variables'] : array();
         $signer_email = isset($_POST['signer_email']) ? sanitize_email($_POST['signer_email']) : '';
         $signer_name = isset($_POST['signer_name']) ? sanitize_text_field($_POST['signer_name']) : '';
         $metadata_json = isset($_POST['metadata']) ? trim($_POST['metadata']) : '';
 
         // Validate
-        if (empty($template_id)) {
+        if (empty($template_slug)) {
             wp_redirect(admin_url('admin.php?page=wp-signflow-create-contract&error=' . urlencode(__('Please select a template.', 'wp-signflow'))));
             exit;
         }
@@ -360,7 +356,7 @@ class WP_SignFlow_Admin {
         }
 
         // Generate contract
-        $result = WP_SignFlow_Contract_Generator::generate_contract($template_id, $sanitized_variables, $metadata);
+        $result = WP_SignFlow_Contract_Generator::generate_contract($template_slug, $sanitized_variables, $metadata);
 
         if (is_wp_error($result)) {
             wp_redirect(admin_url('admin.php?page=wp-signflow-create-contract&error=' . urlencode($result->get_error_message())));

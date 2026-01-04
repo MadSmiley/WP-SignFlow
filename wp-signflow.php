@@ -89,6 +89,9 @@ class WP_SignFlow {
         WP_SignFlow_Admin::get_instance();
         WP_SignFlow_Public_Signature::get_instance();
         WP_SignFlow_Public_API::get_instance();
+
+        // Allow other plugins to register their templates
+        do_action('signflow_register_templates');
     }
 
     /**
