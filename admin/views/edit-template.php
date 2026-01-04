@@ -79,14 +79,39 @@ $page_title = $is_new ? __('Add New Template', 'wp-signflow') : __('Edit Templat
             </tr>
         </table>
 
-        <?php if (!$is_new && !empty($template->detected_variables)): ?>
-            <h2><?php _e('Detected Variables', 'wp-signflow'); ?></h2>
-            <p><?php _e('The following variables were automatically detected in your template:', 'wp-signflow'); ?></p>
-            <ul>
-                <?php foreach ($template->detected_variables as $var): ?>
-                    <li><code>{{<?php echo esc_html($var); ?>}}</code></li>
-                <?php endforeach; ?>
-            </ul>
+        <?php if (!$is_new): ?>
+            <h2><?php _e('Variables', 'wp-signflow'); ?></h2>
+
+            <?php if (!empty($template->declared_variables)): ?>
+                <h3><?php _e('Declared Variables (Available for User Input)', 'wp-signflow'); ?></h3>
+                <p><?php _e('These variables are explicitly declared and will be shown to users when creating contracts:', 'wp-signflow'); ?></p>
+                <table class="widefat">
+                    <thead>
+                        <tr>
+                            <th><?php _e('Variable', 'wp-signflow'); ?></th>
+                            <th><?php _e('Description', 'wp-signflow'); ?></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php foreach ($template->declared_variables as $var_name => $var_desc): ?>
+                            <tr>
+                                <td><code>{{<?php echo esc_html($var_name); ?>}}</code></td>
+                                <td><?php echo esc_html($var_desc ?: __('No description', 'wp-signflow')); ?></td>
+                            </tr>
+                        <?php endforeach; ?>
+                    </tbody>
+                </table>
+            <?php endif; ?>
+
+            <?php if (!empty($template->detected_variables)): ?>
+                <h3 style="margin-top: 20px;"><?php _e('All Detected Variables', 'wp-signflow'); ?></h3>
+                <p><?php _e('The following variables were automatically detected in your template HTML:', 'wp-signflow'); ?></p>
+                <ul>
+                    <?php foreach ($template->detected_variables as $var): ?>
+                        <li><code>{{<?php echo esc_html($var); ?>}}</code></li>
+                    <?php endforeach; ?>
+                </ul>
+            <?php endif; ?>
         <?php endif; ?>
 
         <p class="submit">

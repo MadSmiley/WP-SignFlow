@@ -65,13 +65,20 @@ if (!defined('ABSPATH')) {
                         </td>
                         <td><code><?php echo esc_html($template->slug); ?></code></td>
                         <td>
-                            <?php if (!empty($template->detected_variables)): ?>
-                                <?php foreach ($template->detected_variables as $var): ?>
-                                    <code>{{<?php echo esc_html($var); ?>}}</code>
-                                <?php endforeach; ?>
-                            <?php else: ?>
-                                <em><?php _e('No variables', 'wp-signflow'); ?></em>
-                            <?php endif; ?>
+                            <?php
+                            $declared_count = !empty($template->declared_variables) ? count($template->declared_variables) : 0;
+                            $detected_count = !empty($template->detected_variables) ? count($template->detected_variables) : 0;
+
+                            if ($declared_count > 0 || $detected_count > 0) {
+                                echo sprintf(
+                                    __('%d available / %d used', 'wp-signflow'),
+                                    $declared_count,
+                                    $detected_count
+                                );
+                            } else {
+                                echo '<em>' . __('No variables', 'wp-signflow') . '</em>';
+                            }
+                            ?>
                         </td>
                         <td><?php echo esc_html($template->created_at); ?></td>
                         <td>
