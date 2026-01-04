@@ -97,13 +97,17 @@ class WP_SignFlow {
     public function activate() {
         WP_SignFlow_Database::create_tables();
 
-        // Create upload directory
-        $upload_dir = wp_upload_dir();
-        $signflow_dir = $upload_dir['basedir'] . '/wp-signflow';
+        // Create storage directory
+        $signflow_dir = WP_SignFlow_Storage_Manager::get_storage_dir();
         if (!file_exists($signflow_dir)) {
             wp_mkdir_p($signflow_dir);
-            // Add .htaccess for security
-            file_put_contents($signflow_dir . '/.htaccess', 'deny from all');
+            // Add .htaccess for security (block directory listing, allow PDF access)
+            $htaccess_content = "Options -Indexes\n";
+            $htaccess_content .= "<Files *.pdf>\n";
+            $htaccess_content .= "    Order Allow,Deny\n";
+            $htaccess_content .= "    Allow from all\n";
+            $htaccess_content .= "</Files>\n";
+            file_put_contents($signflow_dir . '/.htaccess', $htaccess_content);
         }
 
         // Schedule cleanup cron (daily)

@@ -129,10 +129,48 @@ class WP_SignFlow_Admin {
     public function register_settings() {
         register_setting('signflow_settings', 'signflow_certificate_language');
         register_setting('signflow_settings', 'signflow_storage_type');
-        register_setting('signflow_settings', 'signflow_storage_path');
+        register_setting('signflow_settings', 'signflow_storage_path', array(
+            'sanitize_callback' => array($this, 'sanitize_storage_path')
+        ));
         register_setting('signflow_settings', 'signflow_gcs_bucket');
         register_setting('signflow_settings', 'signflow_gcs_credentials');
         register_setting('signflow_settings', 'signflow_api_key');
+    }
+
+    /**
+     * Sanitize and create storage directory when storage path is updated
+     */
+    public function sanitize_storage_path($value) {
+        $value = sanitize_text_field($value);
+
+        // If empty, use default (will be handled by Storage Manager)
+        if (empty($value)) {
+            return '';
+        }
+
+        // Create directory if it doesn't exist
+        if (!file_exists($value)) {
+            wp_mkdir_p($value);
+
+            // Add .htaccess for security (block directory listing, allow PDF access)
+            $htaccess_file = $value . '/.htaccess';
+            if (!file_exists($htaccess_file)) {
+                $htaccess_content = "Options -Indexes\n";
+                $htaccess_content .= "<Files *.pdf>\n";
+                $htaccess_content .= "    Order Allow,Deny\n";
+                $htaccess_content .= "    Allow from all\n";
+                $htaccess_content .= "</Files>\n";
+                file_put_contents($htaccess_file, $htaccess_content);
+            }
+        }
+
+        // Create certificates subdirectory
+        $certificates_dir = $value . '/certificates';
+        if (!file_exists($certificates_dir)) {
+            wp_mkdir_p($certificates_dir);
+        }
+
+        return $value;
     }
 
     /**

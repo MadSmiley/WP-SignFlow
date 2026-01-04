@@ -44,6 +44,29 @@ class WP_SignFlow_Storage_Manager {
     }
 
     /**
+     * Convert full file path to public URL
+     */
+    public static function path_to_url($filepath) {
+        if (empty($filepath)) {
+            return '';
+        }
+
+        $storage_path = self::get_storage_dir();
+        $storage_url = self::get_storage_url();
+
+        // If using custom storage path without URL, cannot generate URL
+        if (empty($storage_url)) {
+            return '';
+        }
+
+        // Replace storage path with storage URL
+        $url = str_replace($storage_path, $storage_url, $filepath);
+        $url = str_replace('\\', '/', $url); // Normalize slashes for Windows
+
+        return $url;
+    }
+
+    /**
      * Store signed contract based on configuration
      */
     public static function store_signed_contract($contract_id, $pdf_path) {
@@ -192,10 +215,9 @@ class WP_SignFlow_Storage_Manager {
         }
 
         // Local storage: return direct URL (protected by .htaccess)
-        $upload_dir = wp_upload_dir();
-        // Use signed PDF if exists, otherwise original
-        $pdf_filename = !empty($contract->signed_pdf_path) ? $contract->signed_pdf_path : $contract->original_pdf_path;
-        return $upload_dir['baseurl'] . '/wp-signflow/' . $pdf_filename;
+        // Use signed PDF if exists, otherwise original (paths are now full paths)
+        $pdf_path = !empty($contract->signed_pdf_path) ? $contract->signed_pdf_path : $contract->original_pdf_path;
+        return self::path_to_url($pdf_path);
     }
 
     /**

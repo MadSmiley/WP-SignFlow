@@ -315,8 +315,7 @@ class WP_SignFlow_Public_Signature {
                     <div class="contract-preview">
                         <?php
                         if ($contract->original_pdf_path) {
-                            $upload_dir = wp_upload_dir();
-                            $pdf_url = $upload_dir['baseurl'] . '/wp-signflow/' . $contract->original_pdf_path;
+                            $pdf_url = WP_SignFlow_Storage_Manager::path_to_url($contract->original_pdf_path);
 
                             // Check if it's a PDF or HTML
                             if (substr($contract->original_pdf_path, -4) === '.pdf') {

@@ -51,12 +51,9 @@ if (!$contract) {
             <tr>
                 <th><?php _e('Documents:', 'wp-signflow'); ?></th>
                 <td>
-                    <?php
-                    $upload_dir = wp_upload_dir();
-                    ?>
                     <?php if (!empty($contract->original_pdf_path)): ?>
                         <?php
-                        $original_pdf_url = $upload_dir['baseurl'] . '/wp-signflow/' . $contract->original_pdf_path;
+                        $original_pdf_url = WP_SignFlow_Storage_Manager::path_to_url($contract->original_pdf_path);
                         ?>
                         <a href="<?php echo esc_url($original_pdf_url); ?>" target="_blank" class="button">
                             📄 <?php _e('Download Original Contract', 'wp-signflow'); ?>
@@ -65,7 +62,7 @@ if (!$contract) {
 
                     <?php if (!empty($contract->signed_pdf_path)): ?>
                         <?php
-                        $signed_pdf_url = $upload_dir['baseurl'] . '/wp-signflow/' . $contract->signed_pdf_path;
+                        $signed_pdf_url = WP_SignFlow_Storage_Manager::path_to_url($contract->signed_pdf_path);
                         ?>
                         <a href="<?php echo esc_url($signed_pdf_url); ?>" target="_blank" class="button button-primary" style="margin-left: 10px;">
                             ✍️ <?php _e('Download Signed Contract', 'wp-signflow'); ?>
@@ -74,7 +71,7 @@ if (!$contract) {
 
                     <?php if (isset($contract->certificate_path) && $contract->certificate_path): ?>
                         <?php
-                        $cert_url = $upload_dir['baseurl'] . '/wp-signflow/' . $contract->certificate_path;
+                        $cert_url = WP_SignFlow_Storage_Manager::path_to_url($contract->certificate_path);
                         ?>
                         <a href="<?php echo esc_url($cert_url); ?>" target="_blank" class="button button-secondary" style="margin-left: 10px;">
                             🔒 <?php _e('Download Certificate', 'wp-signflow'); ?>

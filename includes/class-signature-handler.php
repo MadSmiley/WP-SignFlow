@@ -125,8 +125,8 @@ class WP_SignFlow_Signature_Handler {
         WP_SignFlow_Audit_Trail::log_event($contract_id, 'contract_signed', array(
             'original_hash' => $original_hash,
             'signed_hash' => $signed_hash,
-            'pdf_file' => $pdf_result,
-            'certificate_file' => $certificate_path
+            'pdf_file' => basename($pdf_result),
+            'certificate_file' => basename($certificate_path)
         ));
 
         // Store in configured storage (Google Cloud or local)

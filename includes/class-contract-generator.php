@@ -68,7 +68,7 @@ class WP_SignFlow_Contract_Generator {
         WP_SignFlow_Audit_Trail::log_event($contract_id, 'contract_generated', array(
             'template_id' => $template_id,
             'variables' => array_keys($variables),
-            'pdf_file' => $pdf_result,
+            'pdf_file' => basename($pdf_result),
             'original_hash' => $contract->original_hash
         ));
 
@@ -115,25 +115,17 @@ class WP_SignFlow_Contract_Generator {
             return 0;
         }
 
-        $upload_dir = wp_upload_dir();
-        $signflow_dir = $upload_dir['basedir'] . '/wp-signflow';
         $deleted_count = 0;
 
         foreach ($expired_contracts as $contract) {
-            // Delete original PDF file
-            if ($contract->original_pdf_path) {
-                $filepath = $signflow_dir . '/' . $contract->original_pdf_path;
-                if (file_exists($filepath)) {
-                    @unlink($filepath);
-                }
+            // Delete original PDF file (paths are now full paths)
+            if ($contract->original_pdf_path && file_exists($contract->original_pdf_path)) {
+                @unlink($contract->original_pdf_path);
             }
 
-            // Delete signed PDF file if exists
-            if ($contract->signed_pdf_path) {
-                $filepath = $signflow_dir . '/' . $contract->signed_pdf_path;
-                if (file_exists($filepath)) {
-                    @unlink($filepath);
-                }
+            // Delete signed PDF file if exists (paths are now full paths)
+            if ($contract->signed_pdf_path && file_exists($contract->signed_pdf_path)) {
+                @unlink($contract->signed_pdf_path);
             }
 
             // Delete from database
@@ -172,19 +164,15 @@ class WP_SignFlow_Contract_Generator {
             return new WP_Error('contract_signed', 'Cannot delete signed contracts');
         }
 
-        // Delete PDF files
-        $upload_dir = wp_upload_dir();
-        if ($contract->original_pdf_path) {
-            $filepath = $upload_dir['basedir'] . '/wp-signflow/' . $contract->original_pdf_path;
-            if (file_exists($filepath)) {
-                @unlink($filepath);
-            }
+        // Delete PDF files and certificate (paths are now full paths)
+        if ($contract->original_pdf_path && file_exists($contract->original_pdf_path)) {
+            @unlink($contract->original_pdf_path);
         }
-        if ($contract->signed_pdf_path) {
-            $filepath = $upload_dir['basedir'] . '/wp-signflow/' . $contract->signed_pdf_path;
-            if (file_exists($filepath)) {
-                @unlink($filepath);
-            }
+        if ($contract->signed_pdf_path && file_exists($contract->signed_pdf_path)) {
+            @unlink($contract->signed_pdf_path);
+        }
+        if ($contract->certificate_path && file_exists($contract->certificate_path)) {
+            @unlink($contract->certificate_path);
         }
 
         // Delete from database

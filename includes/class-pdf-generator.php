@@ -72,8 +72,7 @@ class WP_SignFlow_PDF_Generator {
 
             // Save PDF
             $filename = 'contract_' . $contract_id . '_' . time() . '.pdf';
-            $upload_dir = wp_upload_dir();
-            $signflow_dir = $upload_dir['basedir'] . '/wp-signflow';
+            $signflow_dir = WP_SignFlow_Storage_Manager::get_storage_dir();
             $filepath = $signflow_dir . '/' . $filename;
 
             $pdf->Output('F', $filepath);
@@ -81,13 +80,13 @@ class WP_SignFlow_PDF_Generator {
             // Calculate hash of original document
             $original_hash = hash_file('sha256', $filepath);
 
-            // Update contract with original PDF only (signed fields remain empty)
+            // Update contract with original PDF (store full path)
             global $wpdb;
             $table = WP_SignFlow_Database::get_table('contracts');
             $wpdb->update(
                 $table,
                 array(
-                    'original_pdf_path' => $filename,
+                    'original_pdf_path' => $filepath, // Store full path
                     'original_hash' => $original_hash
                 ),
                 array('id' => $contract_id),
@@ -96,7 +95,7 @@ class WP_SignFlow_PDF_Generator {
             );
 
 
-            return $filename;
+            return $filepath;
 
         } catch (Exception $e) {
             return new WP_Error('pdf_generation_failed', $e->getMessage());
@@ -114,9 +113,8 @@ class WP_SignFlow_PDF_Generator {
             return new WP_Error('invalid_contract', 'Contract or document not found');
         }
 
-        $upload_dir = wp_upload_dir();
-        $signflow_dir = $upload_dir['basedir'] . '/wp-signflow';
-        $file_path = $signflow_dir . '/' . $contract->original_pdf_path;
+        // original_pdf_path now contains full path
+        $file_path = $contract->original_pdf_path;
 
         if (!file_exists($file_path)) {
             return new WP_Error('file_not_found', 'Document file not found');
@@ -168,8 +166,7 @@ class WP_SignFlow_PDF_Generator {
 
             // Save
             $filename = 'contract_' . $contract_id . '_signed_' . time() . '.pdf';
-            $upload_dir = wp_upload_dir();
-            $signflow_dir = $upload_dir['basedir'] . '/wp-signflow';
+            $signflow_dir = WP_SignFlow_Storage_Manager::get_storage_dir();
             $filepath = $signflow_dir . '/' . $filename;
 
             $pdf->Output('F', $filepath);
@@ -177,13 +174,13 @@ class WP_SignFlow_PDF_Generator {
             // Calculate hash
             $hash = hash_file('sha256', $filepath);
 
-            // Update contract with signed PDF
+            // Update contract with signed PDF (store full path)
             global $wpdb;
             $table = WP_SignFlow_Database::get_table('contracts');
             $wpdb->update(
                 $table,
                 array(
-                    'signed_pdf_path' => $filename,
+                    'signed_pdf_path' => $filepath, // Store full path
                     'signed_pdf_hash' => $hash,
                     'status' => 'signed',
                     'signed_at' => $signed_date
@@ -193,7 +190,7 @@ class WP_SignFlow_PDF_Generator {
                 array('%d')
             );
 
-            return $filename;
+            return $filepath;
 
         } catch (Exception $e) {
             return new WP_Error('signature_add_failed', $e->getMessage());
@@ -204,9 +201,9 @@ class WP_SignFlow_PDF_Generator {
     /**
      * Get file path
      */
-    public static function get_pdf_path($filename) {
-        $upload_dir = wp_upload_dir();
-        return $upload_dir['basedir'] . '/wp-signflow/' . $filename;
+    public static function get_pdf_path($filepath) {
+        // filepath is now the full path, just return it
+        return $filepath;
     }
 
     /**
@@ -302,15 +299,35 @@ class WP_SignFlow_PDF_Generator {
                 ))
             );
 
-            // Save certificate
+            // Save certificate in certificates subdirectory
+            $signflow_dir = WP_SignFlow_Storage_Manager::get_storage_dir();
+            $certificates_dir = $signflow_dir . '/certificates';
+
+            // Create certificates directory if it doesn't exist
+            if (!file_exists($certificates_dir)) {
+                wp_mkdir_p($certificates_dir);
+            }
+
             $filename = 'certificate_' . $contract_id . '_' . time() . '.pdf';
-            $upload_dir = wp_upload_dir();
-            $signflow_dir = $upload_dir['basedir'] . '/wp-signflow';
-            $filepath = $signflow_dir . '/' . $filename;
+            $filepath = $certificates_dir . '/' . $filename;
 
             $pdf->Output('F', $filepath);
 
-            return $filename;
+            // Calculate certificate hash
+            $certificate_hash = hash_file('sha256', $filepath);
+
+            // Log certificate generation to audit trail
+            WP_SignFlow_Audit_Trail::log_event($contract_id, 'certificate_generated', array(
+                'certificate_file' => basename($filepath),
+                'certificate_hash' => $certificate_hash,
+                'language' => $language,
+                'signer_name' => $signer_name,
+                'signer_email' => $signer_email,
+                'original_hash' => $original_hash,
+                'signed_hash' => $signed_hash
+            ));
+
+            return $filepath;
 
         } catch (Exception $e) {
             return new WP_Error('certificate_generation_failed', $e->getMessage());
