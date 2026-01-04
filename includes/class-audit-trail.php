@@ -72,7 +72,7 @@ class WP_SignFlow_Audit_Trail {
         $table = WP_SignFlow_Database::get_table('audit');
 
         $results = $wpdb->get_results($wpdb->prepare(
-            "SELECT * FROM $table WHERE contract_id = %d ORDER BY created_at DESC",
+            "SELECT * FROM $table WHERE contract_id = %d ORDER BY id ASC",
             $contract_id
         ));
 
