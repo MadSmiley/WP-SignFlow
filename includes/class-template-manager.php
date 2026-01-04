@@ -15,7 +15,6 @@ class WP_SignFlow_Template_Manager {
      * @param string $slug Unique slug for the template (defined by the registering plugin)
      * @param array $args Template arguments
      *   - name (required): Template display name
-     *   - content (required): Template HTML content with {{variables}}
      *   - variables (optional): Array of declared available variable names
      *   - language (optional): Template language (default: 'en')
      * @return string|false Template slug on success, false on failure
@@ -31,7 +30,7 @@ class WP_SignFlow_Template_Manager {
         $args = wp_parse_args($args, $defaults);
 
         // Validate required fields
-        if (empty($slug) || empty($args['name']) || empty($args['content'])) {
+        if (empty($slug) || empty($args['name'])) {
             return false;
         }
 
@@ -43,7 +42,7 @@ class WP_SignFlow_Template_Manager {
         }
 
         // Create new template
-        return self::create_template($args['name'], $args['content'], $args['variables'], $args['language'], $slug);
+        return self::create_template($args['name'], $args['content'] ?? 'To Defined', $args['variables'], $args['language'], $slug);
     }
 
     /**
